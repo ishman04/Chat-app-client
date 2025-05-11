@@ -7,9 +7,11 @@ import { apiClient } from '@/lib/api-client'
 import { LOGIN_ROUTE, SIGNUP_ROUTE } from '../../utils/constants'
 import { useNavigate } from 'react-router-dom'
 import {StatusCodes} from 'http-status-codes'
+import { useAppStore } from '../../store'
 
 const Auth = () => {
-    const navigate = useNavigate()
+  const navigate = useNavigate()
+  const {setUserInfo} = useAppStore();
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -46,6 +48,7 @@ const Auth = () => {
     if(validateLogin()){
         const response = await apiClient.post(LOGIN_ROUTE,{email,password},{withCredentials: true})
         if(response.data.data.id){
+          setUserInfo(response.data.data)
             if(response.data.data.profileSetup){
                 navigate('/chat')
             }
@@ -60,7 +63,8 @@ const Auth = () => {
     if(validateSignup()){
         const response = await apiClient.post(SIGNUP_ROUTE,{email,password},{withCredentials: true})
         if(response.status === StatusCodes.CREATED){
-            navigate('/profile')
+          setUserInfo(response.data.data)  
+          navigate('/profile')
         }
         console.log(response);
     }
