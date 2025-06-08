@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {toast} from 'sonner'
 import { apiClient } from '../../lib/api-client'
-import { UPDATE_PROFILE_ROUTE, ADD_PROFILE_IMAGE_ROUTE,HOST } from '../../utils/constants'
+import { UPDATE_PROFILE_ROUTE, ADD_PROFILE_IMAGE_ROUTE,HOST, REMOVE_PROFILE_IMAGE_ROUTE } from '../../utils/constants'
 import StatusCodes from 'http-status-codes'
 import { useNavigate } from 'react-router-dom'
 
@@ -32,7 +32,10 @@ const Profile = () => {
     if(userInfo.image){
       setImage(`${HOST}/${userInfo.image}`)
     }
-   },[userInfo])
+    else{
+      setImage(null)
+    }
+   },[userInfo,setUserInfo])
 
   const validateProfile = () => {
     if(!firstName){
@@ -98,7 +101,11 @@ const Profile = () => {
   }
 
   const handleDeleteImage = async() =>{
-    
+      const response = await apiClient.delete(REMOVE_PROFILE_IMAGE_ROUTE,{withCredentials:true})
+      if(response.status == StatusCodes.OK){
+        setUserInfo(response.data.data)
+        toast.success("Profile image deleted successfully")
+      }
   }
 
   return (
