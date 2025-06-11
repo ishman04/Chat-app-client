@@ -115,7 +115,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center bg-[#111] text-white font-sans">
+    <div className="h-screen w-screen flex items-center justify-center bg-[#111] text-white font-poppins">
       <div className="w-[92vw] md:w-[80vw] lg:w-[60vw] xl:w-[50vw] bg-[#1a1a1a] rounded-3xl p-8 shadow-[0_0_25px_#000] space-y-10 border border-[#2f303b]">
 
         {/* Back */}
@@ -142,7 +142,7 @@ const Profile = () => {
                 />
               ) : (
                 <div
-                  className={`uppercase h-full w-full text-4xl flex items-center justify-center rounded-full ${getColor(
+                  className={`uppercase h-full w-full text-4xl font-semibold tracking-widest flex items-center justify-center rounded-full ${getColor(
                     selectedColor
                   )}`}
                 >
@@ -177,46 +177,47 @@ const Profile = () => {
         </div>
 
         {/* Form Inputs */}
-        <div className="space-y-4 max-w-md mx-auto">
+        <div className="space-y-5 max-w-md mx-auto">
           <div className="space-y-1">
-            <label className="text-gray-300 text-sm">Email</label>
+            <label className="text-sm text-gray-300 font-medium tracking-wide">Email</label>
             <Input
               type="email"
               disabled
               value={userInfo.email}
-              className="bg-[#222] text-white border border-[#444] px-4 py-3 rounded-md focus:ring-white"
+              className="bg-[#222] text-white border border-[#444] px-4 py-3 rounded-md text-base tracking-wide"
             />
           </div>
           <div className="space-y-1">
-            <label className="text-gray-300 text-sm">First Name</label>
+            <label className="text-sm text-gray-300 font-medium tracking-wide">First Name</label>
             <Input
               type="text"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              className="bg-[#222] text-white border border-[#444] px-4 py-3 rounded-md focus:ring-white"
+              className="bg-[#222] text-white border border-[#444] px-4 py-3 rounded-md text-base tracking-wide"
             />
           </div>
           <div className="space-y-1">
-            <label className="text-gray-300 text-sm">Last Name</label>
+            <label className="text-sm text-gray-300 font-medium tracking-wide">Last Name</label>
             <Input
               type="text"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              className="bg-[#222] text-white border border-[#444] px-4 py-3 rounded-md focus:ring-white"
+              className="bg-[#222] text-white border border-[#444] px-4 py-3 rounded-md text-base tracking-wide"
             />
           </div>
 
           {/* Color Picker */}
-          <div className="flex justify-center gap-3 pt-3">
-            {colors.map((color, index) => (
-              <div
-                key={index}
-                className={`h-8 w-8 rounded-full cursor-pointer border-2 transition-all ${color} ${
-                  selectedColor === index ? 'ring-2 ring-white' : ''
-                }`}
-                onClick={() => setSelectedColor(index)}
-              ></div>
-            ))}
+          <div className="pt-3">
+            <p className="text-sm text-gray-400 font-medium tracking-wide mb-2 text-center">Choose a profile color</p>
+            <div className="flex justify-center gap-3">
+              {colors.map((color, index) => (
+                <div
+                  key={index}
+                  className={`h-8 w-8 rounded-full cursor-pointer border-2 transition-all ${color} ${selectedColor === index ? 'ring-2 ring-white' : ''}`}
+                  onClick={() => setSelectedColor(index)}
+                ></div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -224,7 +225,7 @@ const Profile = () => {
         <div className="flex justify-center">
           <Button
             onClick={saveChanges}
-            className="bg-white text-black text-lg px-8 py-3 rounded-lg hover:bg-gray-300 transition-all shadow-md"
+            className="bg-white text-black text-lg font-semibold tracking-wide px-10 py-3 rounded-xl hover:bg-gray-200 transition-all shadow-md"
           >
             Save Changes
           </Button>
