@@ -18,7 +18,7 @@ import {
 } from "../../../../../../components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { animationDefaultOptions, getColor } from "../../../../../../lib/utils";
+import { chatAnimationDefaultOptions, getColor } from "../../../../../../lib/utils";
 import Lottie from "react-lottie";
 import { apiClient } from "../../../../../../lib/api-client";
 import { HOST, SEARCH_CONTACTS_ROUTES } from "../../../../../../utils/constants";
@@ -139,9 +139,9 @@ const NewDM = () => {
             <div className="flex-1 flex flex-col justify-center items-center">
               <Lottie
                 isClickToPauseDisabled={true}
-                height={200}
-                width={200}
-                options={animationDefaultOptions}
+                height={150}
+                width={150}
+                options={chatAnimationDefaultOptions}
               />
             </div>
           )}

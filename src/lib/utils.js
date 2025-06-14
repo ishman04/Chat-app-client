@@ -1,6 +1,7 @@
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import animationData from '@/assets/lottie-json'
+import chatAnimationData from '@/assets/chat-lottie'
 
 
 export function cn(...inputs) {
@@ -25,4 +26,10 @@ export const animationDefaultOptions = {
   loop: true,
   autoplay: true,
   animationData
+}
+
+export const chatAnimationDefaultOptions = {
+  loop: true,
+  autoplay: true,
+  animationData: chatAnimationData
 }
