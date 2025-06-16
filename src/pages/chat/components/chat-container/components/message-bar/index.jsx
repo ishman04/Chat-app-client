@@ -31,17 +31,21 @@ const MessageBar = () => {
         setMessage((msg) => msg + emoji.emoji);
     }
 
-  const handleSendMessage = async() => {
-    if(selectedChatType === 'contact') {
-      socket.emit("sendMessage",{
-        sender: userInfo.id,
-        content: message,
-        recipient: selectedChatData._id,
-        messageType: 'text',
-        fileUrl: undefined
-      })
-    }
+  const handleSendMessage = async () => {
+  if (selectedChatType === 'contact') {
+    console.log("📤 Sending message:", message);
+    socket.current.emit("sendMessage", {
+      sender: userInfo.id,
+      content: message,
+      recipient: selectedChatData._id,
+      messageType: 'text',
+      fileUrl: undefined
+    });
+    
+    setMessage(""); // clear input after send
   }
+}
+
 
   return (
     <div className="h-[10vh] bg-[#111] px-8 flex items-center gap-4 border-t border-[#222]">
