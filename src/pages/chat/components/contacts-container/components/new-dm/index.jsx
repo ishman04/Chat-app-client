@@ -32,27 +32,30 @@ const NewDM = () => {
   const {setSelectedChatType, setSelectedChatData,setSelectedChatMessages} = useAppStore();
 
   const searchContacts = async (searchTerm) => {
-    try {
-      if (searchTerm.length > 0) {
-        const response = await apiClient.post(
-          SEARCH_CONTACTS_ROUTES,
-          { searchTerm },
-          { withCredentials: true }
-        );
-        console.log(response);
-        if (response.status === StatusCodes.OK) {
-          setSearchedContacts(response.data.data);
-        } else {
-          setSearchedContacts([]);
-        }
-      }
-      else{
-        setSearchedContacts([])
-      }
-    } catch (error) {
-      console.log(error);
+  const trimmed = searchTerm.trim();
+  if (trimmed.length === 0) {
+    setSearchedContacts([]); // Clear when input is empty
+    return;
+  }
+
+  try {
+    const response = await apiClient.post(
+      SEARCH_CONTACTS_ROUTES,
+      { searchTerm: trimmed },
+      { withCredentials: true }
+    );
+    
+    if (response.status === StatusCodes.OK) {
+      setSearchedContacts(response.data.data);
+    } else {
+      setSearchedContacts([]);
     }
-  };
+  } catch (error) {
+    console.log(error);
+    setSearchedContacts([]); 
+  }
+};
+
   const selectNewContact = (contact) => {
     setOpenNewContactModel(false)
     setSelectedChatType("contact")
