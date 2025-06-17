@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useAppStore } from "../../../../../../store";
 import moment from "moment";
+import {apiClient} from '../../../../../../lib/api-client'
+import { GET_ALL_MESSAGES_ROUTES } from "../../../../../../utils/constants";
 
 const MessageContainer = () => {
   const scrollRef = useRef();
@@ -9,7 +11,26 @@ const MessageContainer = () => {
     selectedChatData,
     userInfo,
     selectedChatMessages,
+    setSelectedChatMessages
   } = useAppStore();
+
+  useEffect(() =>{
+    const getMessages = async() => {
+      try {
+        const response = await apiClient.post(GET_ALL_MESSAGES_ROUTES,{id:selectedChatData._id},{withCredentials:true})
+        if(response.data.data){
+          setSelectedChatMessages(response.data.data)
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    if(selectedChatData._id){
+      if(selectedChatType==='contact'){
+        getMessages();
+      }
+    }
+  },[selectedChatData,selectedChatType,setSelectedChatMessages])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -47,6 +68,11 @@ const MessageContainer = () => {
       </div>
     );
   };
+
+  const checkIfImage = (filePath) => {
+    const imageRegex = /\.(jpg|jpeg|png|gif|bmp|tiff|tif|webp|svg|ico|heic|heif)$/i
+    return imageRegex.test(filePath)
+  }
 
   const renderMessages = () => {
     if (!selectedChatMessages || selectedChatMessages.length === 0) {
