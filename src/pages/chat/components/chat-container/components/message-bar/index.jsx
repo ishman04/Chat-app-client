@@ -64,7 +64,7 @@ const handleAttachementChange = async(event) => {
       const response = await apiClient.post(UPLOAD_FILE_ROUTE,formData,{withCredentials:true})
 
       if(response.status === StatusCodes.OK && response.data.data.filePath){
-        socket.current.emit("sendFile", {
+        socket.current.emit("sendMessage", {
       sender: userInfo.id,
       content: undefined,
       recipient: selectedChatData._id,
