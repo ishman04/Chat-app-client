@@ -148,13 +148,7 @@ const NewDM = () => {
               />
             </div>
           )}
-          <div className="mt-6 flex justify-center">
-            <DialogClose asChild>
-              <Button className="bg-white text-black text-lg px-10 py-3 rounded-md hover:bg-gray-200">
-                Close
-              </Button>
-            </DialogClose>
-          </div>
+
         </DialogContent>
       </Dialog>
     </div>

@@ -16,7 +16,7 @@ const MessageBar = () => {
   const emojiRef = useRef()
   const fileInputRef = useRef();
   const socket = useSocket();
-  const {userInfo,selectedChatType, selectedChatData} = useAppStore();
+  const {userInfo,selectedChatType, selectedChatData, setIsUploading, setFileUploadProgress} = useAppStore();
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false); 
   useEffect(()=> {
     function handleClickOutside(event){
@@ -48,6 +48,15 @@ const MessageBar = () => {
     
     setMessage(""); // clear input after send
   }
+  else if(selectedChatType==='channel'){
+    socket.current.emit("sendChannelMessage",{
+      sender: userInfo.id,
+      content: message,
+      messageType:'text',
+      fileUrl: undefined,
+      channelId: selectedChatData._id
+    })
+  }
 }
 
 const handleAttachementClick = () => {
@@ -61,17 +70,38 @@ const handleAttachementChange = async(event) => {
     if(file){
       const formData = new FormData();
       formData.append('file', file);
-      const response = await apiClient.post(UPLOAD_FILE_ROUTE,formData,{withCredentials:true})
+      setIsUploading(true);
+      const response = await apiClient.post(UPLOAD_FILE_ROUTE,formData,
+        {withCredentials:true,
+          onUploadProgress: data => {
+          setFileUploadProgress(Math.round((100*data.loaded)/data.total))
+          }
+        })
 
-      if(response.status === StatusCodes.OK && response.data.data.filePath){
-        socket.current.emit("sendMessage", {
+      if (response.status === StatusCodes.OK && response.data.data.filePath) {
+  setIsUploading(false);
+
+  if (selectedChatType === 'contact') {
+    socket.current.emit("sendMessage", {
       sender: userInfo.id,
       content: undefined,
       recipient: selectedChatData._id,
       messageType: 'file',
       fileUrl: response.data.data.filePath
-    })
-      }
+    });
+  } else if (selectedChatType === 'channel') {
+    socket.current.emit("sendChannelMessage", {
+      sender: userInfo.id,
+      content: undefined,
+      messageType: 'file',
+      fileUrl: response.data.data.filePath,
+      channelId: selectedChatData._id
+    });
+  }
+
+  setMessage("");
+}
+
     }
   } catch (error) {
     console.log(error);   

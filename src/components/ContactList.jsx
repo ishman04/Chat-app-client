@@ -3,7 +3,7 @@ import { useAppStore } from "../store";
 import { HOST } from "../utils/constants";
 import { getColor } from "../lib/utils";
 
-const ContactList = ({ contacts, isChannel = false }) => {
+const ContactList = ({ contacts,  isChannel = false }) => {
   const {
     selectedChatData,
     setSelectedChatData,
@@ -58,6 +58,18 @@ const ContactList = ({ contacts, isChannel = false }) => {
                 )}
               </Avatar>
             )}
+            {isChannel && (
+              <div
+                className={`h-11 w-11 rounded-full flex items-center justify-center text-4xl font-bold shadow-md ${
+                  selectedChatData && selectedChatData._id === contact._id
+                    ? "bg-black text-white"
+                    : "bg-white text-black"
+                }`}
+              >
+                #
+              </div>
+            )}
+
             <div className="text-base font-semibold truncate">
               {isChannel ? contact.name : contact.firstName || contact.email}
             </div>

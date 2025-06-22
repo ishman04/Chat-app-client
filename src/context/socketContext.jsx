@@ -13,7 +13,8 @@ export const SocketProvider = ({ children }) => {
   const socket = useRef();
 
   // 🧠 Extract state once using hooks (valid usage)
-  const { userInfo, selectedChatData, selectedChatType, addMessage } = useAppStore();
+  const { userInfo, selectedChatData, selectedChatType, addMessage } =
+    useAppStore();
 
   // ⏺️ Refs to store latest selected chat
   const selectedChatDataRef = useRef();
@@ -59,7 +60,19 @@ export const SocketProvider = ({ children }) => {
         }
       };
 
+      const handleRecieveChannelMessage = (message) => {
+        const { selectedChatData, selectedChatType, addMessage } =
+          useAppStore.getState();
+        if (
+          selectedChatData !== undefined &&
+          selectedChatData._id?.toString() === message.channelId?.toString()
+        ) {
+          addMessage(message);
+        }
+      };
+
       socket.current.on("receiveMessage", handleRecieveMessage);
+      socket.current.on("receive-channel-message", handleRecieveChannelMessage);
 
       return () => {
         socket.current.disconnect();
@@ -69,8 +82,6 @@ export const SocketProvider = ({ children }) => {
   }, [userInfo]);
 
   return (
-    <SocketContext.Provider value={socket}>
-      {children}
-    </SocketContext.Provider>
+    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
   );
 };
