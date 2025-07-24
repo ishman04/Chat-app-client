@@ -17,6 +17,9 @@ export const SocketProvider = ({ children }) => {
     useAppStore();
 
   // ⏺️ Refs to store latest selected chat
+//   These refs are "mirrors" of your state values. Why?
+
+// Because socket events are outside the React render lifecycle. If selectedChatData updates in the UI, your socket.on() handlers won’t see it unless you manually sync it.
   const selectedChatDataRef = useRef();
   const selectedChatTypeRef = useRef();
 
