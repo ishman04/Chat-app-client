@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { apiClient } from "../../../../../../lib/api-client";
 import { CREATE_CHANNEL_ROUTE, GET_ALL_CONTACT_ROUTES, HOST } from "../../../../../../utils/constants";
 import { useAppStore } from "../../../../../../store";
-import MultipleSelector from "../../../../../../components/ui/multipleSelect";
+import MultipleSelector from "components/ui/multipleselect";
 import { StatusCodes } from "http-status-codes";
 
 const CreateChannel = () => {
