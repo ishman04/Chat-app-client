@@ -87,7 +87,7 @@ const MessageContainer = () => {
     });
 
     // Create download link
-    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const url = window.URL.createObjectURL(response.data);
     const link = document.createElement("a");
     link.href = url;
     
@@ -110,7 +110,6 @@ const MessageContainer = () => {
     console.error("Download failed:", error);
     setIsDownloading(false);
     setFileDownloadProgress(0);
-    // Add error handling UI here
   }
 };
 
@@ -174,7 +173,7 @@ const MessageContainer = () => {
                     <MdFolderZip />
                   </span>
                   <span className="truncate max-w-[140px] text-sm font-medium">
-                    {message.fileUrl.replace(/\\/g, "/").split("uploads/").pop()}
+                    {message.fileUrl.split("/").pop()}
                   </span>
                   <span
                     className="bg-black/30 text-white p-3 text-2xl rounded-full hover:bg-black/60 cursor-pointer transition-all"
