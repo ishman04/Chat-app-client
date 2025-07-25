@@ -12,22 +12,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
+} from "../../../../../../components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { apiClient } from "../../../lib/api-client";
+import { apiClient } from "../../../../../../lib/api-client";
 import {
   CREATE_CHANNEL_ROUTE,
   GET_ALL_CONTACT_ROUTES,
-} from "../../../utils/constants";
-import { useAppStore } from "../../../store";
-import { MultiSelect } from "@/components/ui/multi-select"; // Assuming the file is multi-select.jsx
+} from "../../../../../../utils/constants";
+import { useAppStore } from "../../../../../../store";
+import MultipleSelector from "@/components/ui/multipleselect";
 import { StatusCodes } from "http-status-codes";
 import { toast } from "sonner";
 
 const CreateChannel = () => {
   const [newChannelModel, setNewChannelModel] = useState(false);
-  // 1. Simplified state: Only one list for all contacts is needed.
+  // 1. Simplified state. Only one list is needed for all contacts.
   const [allContacts, setAllContacts] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState([]);
   const [channelName, setChannelName] = useState("");
@@ -47,6 +47,7 @@ const CreateChannel = () => {
             label: user.label,
             value: user.value,
           }));
+          // Only set the single list of all contacts.
           setAllContacts(formattedContacts);
         }
       } catch (err) {
@@ -57,13 +58,13 @@ const CreateChannel = () => {
       }
     };
 
-    // Fetch contacts only when the dialog is opened.
     if (newChannelModel) {
       getAllContactsForChannel();
     }
   }, [newChannelModel]);
 
-  // 2. Removed the `handleSearch` function. It's not needed for client-side filtering.
+  // 2. Removed `handleSearch` function as it's no longer needed.
+  // The multi-select component will handle filtering internally.
 
   const createChannel = async () => {
     if (!channelName.trim()) {
@@ -133,11 +134,9 @@ const CreateChannel = () => {
           </div>
 
           <div className="mt-4">
-            <MultiSelect
-              // 3. Pass the single source of truth for contacts here.
+            <MultipleSelector
+              // 3. Pass the single source of truth for contacts.
               options={allContacts}
-              value={selectedContacts}
-              onChange={setSelectedContacts}
               disabled={isLoadingContacts}
               className="bg-[#222] border-none text-white placeholder-gray-400 [&>div]:border-none [&>div]:bg-[#222]"
               placeholder={
@@ -145,9 +144,11 @@ const CreateChannel = () => {
                   ? "Loading contacts..."
                   : "Search and select members"
               }
+              value={selectedContacts}
+              onChange={setSelectedContacts}
               emptyIndicator={
                 <p className="text-center text-sm leading-10 text-gray-500">
-                  No matching contacts found.
+                  No matching contacts found
                 </p>
               }
             />
@@ -157,7 +158,7 @@ const CreateChannel = () => {
             <Button
               className="w-full bg-white text-black font-semibold text-base py-3 rounded-md hover:bg-gray-200"
               onClick={createChannel}
-              // 4. Improved disabled logic for better UX.
+              // 4. Improved disabled logic for better UX
               disabled={
                 isLoadingContacts ||
                 channelName.trim() === "" ||
