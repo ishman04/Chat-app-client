@@ -43,14 +43,9 @@ const CreateChannel = () => {
         { withCredentials: true }
       );
 
-      if (response.status === StatusCodes.OK && response.data.data) {
-        const contacts = response.data.data.map(contact => ({
-          value: contact._id,
-          label: contact.firstName ? `${contact.firstName} ${contact.lastName}` : contact.email,
-        }));
-        setSearchedContacts(contacts);
+      if (response.status === StatusCodes.OK) {
+        setSearchedContacts(response.data.data);
       } else {
-        // Handle cases where API returns OK but no data
         setSearchedContacts([]);
       }
     } catch (err) {
