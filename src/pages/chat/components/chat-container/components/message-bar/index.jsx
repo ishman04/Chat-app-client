@@ -90,10 +90,11 @@ const handleAttachementChange = async (event) => {
 
       const messageData = {
         sender: userInfo.id,
-        content: message, // Include any text message along with the file
+        content: message,
         messageType: 'file',
-        fileUrl: response.data.data.filePath
-      };
+        fileUrl: response.data.data.filePath,
+        originalFilename: response.data.data.originalFilename,
+    };
 
       if (selectedChatType === 'contact') {
         messageData.recipient = selectedChatData._id;

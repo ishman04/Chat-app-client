@@ -69,12 +69,14 @@ const MessageContainer = () => {
     }
   }, [selectedChatMessages]);
 
- const downloadFile = async (file) => {
+ const downloadFile = async (message) => { // <-- Accepts the whole message object
   setIsDownloading(true);
   setFileDownloadProgress(0);
   
+  const fileUrl = message.fileUrl; // <-- Get the URL from the message
+
   try {
-    const response = await apiClient.get(file, {
+    const response = await apiClient.get(fileUrl, {
       responseType: "blob",
       onDownloadProgress: (progressEvent) => {
         if (progressEvent.total) {
@@ -86,13 +88,12 @@ const MessageContainer = () => {
       },
     });
 
-    // Create download link
     const url = window.URL.createObjectURL(response.data);
     const link = document.createElement("a");
     link.href = url;
     
-    // Extract filename from URL or use a default
-    const filename = file.split('/').pop() || `download-${Date.now()}`;
+    // --- USE THE originalFilename FROM THE MESSAGE OBJECT ---
+    const filename = message.originalFilename || fileUrl.split('/').pop();
     link.setAttribute("download", filename);
     
     document.body.appendChild(link);
@@ -177,7 +178,7 @@ const MessageContainer = () => {
                   </span>
                   <span
                     className="bg-black/30 text-white p-3 text-2xl rounded-full hover:bg-black/60 cursor-pointer transition-all"
-                    onClick={() => downloadFile(message.fileUrl)}
+                    onClick={() => downloadFile(message)}
                   >
                     <IoMdArrowDown />
                   </span>
