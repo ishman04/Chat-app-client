@@ -39,8 +39,13 @@ const CreateChannel = () => {
           withCredentials: true,
         });
         if (response.status === StatusCodes.OK && response.data.data) {
-          setMasterContactList(response.data.data);
-          setDisplayContacts(response.data.data);
+          // Ensure each contact has both label and value properties
+          const formattedContacts = response.data.data.map(contact => ({
+            label: contact.label || `${contact.firstName} ${contact.lastName}`,
+            value: contact.value || contact._id
+          }));
+          setMasterContactList(formattedContacts);
+          setDisplayContacts(formattedContacts);
         }
       } catch (err) {
         console.error("Failed to load contacts:", err);
@@ -60,11 +65,8 @@ const CreateChannel = () => {
       setDisplayContacts(masterContactList);
       return;
     }
-    const filtered = masterContactList.filter(
-      (contact) =>
-        contact &&
-        typeof contact.label === "string" &&
-        contact.label.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = masterContactList.filter(contact => 
+      contact.label.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setDisplayContacts(filtered);
   };
@@ -143,9 +145,12 @@ const CreateChannel = () => {
               onChange={setSelectedContacts}
               emptyIndicator={
                 <p className="text-center text-sm leading-10 text-gray-500">
-                  No contacts found.
+                  {isLoadingContacts ? "Loading..." : "No contacts found"}
                 </p>
               }
+              // Ensure these match your data structure
+              label="label"
+              valueKey="value"
             />
           </div>
 
@@ -153,6 +158,7 @@ const CreateChannel = () => {
             <Button
               className="w-full bg-white text-black font-semibold text-base py-3 rounded-md hover:bg-gray-200"
               onClick={createChannel}
+              disabled={isLoadingContacts}
             >
               Create Channel
             </Button>
