@@ -38,12 +38,14 @@ const CreateChannel = () => {
         const response = await apiClient.get(GET_ALL_CONTACT_ROUTES, {
           withCredentials: true,
         });
+        
         if (response.status === StatusCodes.OK && response.data.data) {
-          // Ensure each contact has both label and value properties
+          // Transform API data to match MultipleSelector's expected format
           const formattedContacts = response.data.data.map(contact => ({
-            label: contact.label || `${contact.firstName} ${contact.lastName}`,
-            value: contact.value || contact._id
+            label: contact.label || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || contact.email,
+            value: contact.value || contact._id || contact.id
           }));
+          
           setMasterContactList(formattedContacts);
           setDisplayContacts(formattedContacts);
         }
@@ -65,14 +67,16 @@ const CreateChannel = () => {
       setDisplayContacts(masterContactList);
       return;
     }
+    
     const filtered = masterContactList.filter(contact => 
       contact.label.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    setDisplayContacts(filtered);
+    
+    setDisplayContacts(filtered.length > 0 ? filtered : []);
   };
 
   const createChannel = async () => {
-    if (channelName.trim().length <= 0) {
+    if (!channelName.trim()) {
       return toast.error("Channel name is required.");
     }
     if (selectedContacts.length < 2) {
@@ -93,8 +97,8 @@ const CreateChannel = () => {
         toast.success("Channel created successfully.");
       }
     } catch (error) {
-      console.log(error);
-      toast.error("Failed to create channel.");
+      console.error("Channel creation error:", error);
+      toast.error(error.response?.data?.message || "Failed to create channel.");
     }
   };
 
@@ -145,12 +149,16 @@ const CreateChannel = () => {
               onChange={setSelectedContacts}
               emptyIndicator={
                 <p className="text-center text-sm leading-10 text-gray-500">
-                  {isLoadingContacts ? "Loading..." : "No contacts found"}
+                  {masterContactList.length === 0 
+                    ? "No contacts available" 
+                    : "No matching contacts found"}
                 </p>
               }
-              // Ensure these match your data structure
-              label="label"
-              valueKey="value"
+              loadingIndicator={
+                <p className="text-center text-sm leading-10 text-gray-500">
+                  Searching...
+                </p>
+              }
             />
           </div>
 
@@ -160,7 +168,7 @@ const CreateChannel = () => {
               onClick={createChannel}
               disabled={isLoadingContacts}
             >
-              Create Channel
+              {isLoadingContacts ? "Creating..." : "Create Channel"}
             </Button>
           </div>
         </DialogContent>
