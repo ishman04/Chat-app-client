@@ -11,12 +11,16 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription
+  DialogDescription,
 } from "../../../../../../components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "../../../../../../lib/api-client";
-import { CREATE_CHANNEL_ROUTE, GET_ALL_CONTACT_ROUTES, SEARCH_CONTACTS_ROUTES } from "../../../../../../utils/constants";
+import {
+  CREATE_CHANNEL_ROUTE,
+  GET_ALL_CONTACT_ROUTES,
+  SEARCH_CONTACTS_ROUTES,
+} from "../../../../../../utils/constants";
 import { useAppStore } from "../../../../../../store";
 import MultipleSelector from "@/components/ui/multipleselect";
 import { StatusCodes } from "http-status-codes";
@@ -38,11 +42,16 @@ const CreateChannel = () => {
         const response = await apiClient.get(GET_ALL_CONTACT_ROUTES, {
           withCredentials: true,
         });
-        
+
         if (response.status === StatusCodes.OK && response.data.data) {
-          // Transform API data to match MultipleSelector's expected format
-          const formattedContacts = response.data.data
-          
+          const formattedContacts = response.data.data.map((user) => ({
+            label:
+              user.firstName && user.lastName
+                ? `${user.firstName} ${user.lastName}`
+                : user.email || "Unnamed",
+            value: String(user._id),
+          }));
+
           setMasterContactList(formattedContacts);
           setDisplayContacts(formattedContacts);
         }
@@ -60,34 +69,38 @@ const CreateChannel = () => {
   }, [newChannelModel]);
 
   const handleSearch = async (searchTerm) => {
-  if (!searchTerm) {
-    setDisplayContacts(masterContactList);
-    return;
-  }
+    if (!searchTerm) {
+      setDisplayContacts(masterContactList);
+      return;
+    }
 
-  try {
-    const response = await apiClient.post(SEARCH_CONTACTS_ROUTES, {
-      searchTerm,
-    }, {
-      withCredentials: true,
-    });
+    try {
+      const response = await apiClient.post(
+        SEARCH_CONTACTS_ROUTES,
+        { searchTerm },
+        { withCredentials: true }
+      );
 
-    if (response.status === StatusCodes.OK && response.data.data) {
-      const formatted = response.data.data.map(user => ({
-        label: `${user.firstName} ${user.lastName}`,
-        value: user._id,
-      }));
-      setDisplayContacts(formatted);
-    } else {
-      setDisplayContacts([]);
-    }
-  } catch (error) {
-    console.error("Search error:", error);
-    toast.error("Failed to search contacts.");
-    setDisplayContacts([]);
-  }
-};
+      if (response.status === StatusCodes.OK && response.data.data) {
+        const formatted = response.data.data.map((user) => ({
+          label:
+            user.firstName && user.lastName
+              ? `${user.firstName} ${user.lastName}`
+              : user.email || "Unnamed",
+          value: String(user._id),
+        }));
 
+        console.log("Formatted contacts:", formatted);
+        setDisplayContacts(formatted);
+      } else {
+        setDisplayContacts([]);
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      toast.error("Failed to search contacts.");
+      setDisplayContacts([]);
+    }
+  };
 
   const createChannel = async () => {
     if (!channelName.trim()) {
@@ -96,12 +109,16 @@ const CreateChannel = () => {
     if (selectedContacts.length < 2) {
       return toast.error("Please select at least two members.");
     }
-    
+
     try {
-      const response = await apiClient.post(CREATE_CHANNEL_ROUTE, {
-        name: channelName,
-        members: selectedContacts.map((contact) => contact.value)
-      }, { withCredentials: true });
+      const response = await apiClient.post(
+        CREATE_CHANNEL_ROUTE,
+        {
+          name: channelName,
+          members: selectedContacts.map((contact) => contact.value),
+        },
+        { withCredentials: true }
+      );
 
       if (response.status === StatusCodes.CREATED) {
         setChannelName("");
@@ -158,14 +175,16 @@ const CreateChannel = () => {
               onSearch={handleSearch}
               disabled={isLoadingContacts}
               className="bg-[#222] border-none text-white placeholder-gray-400 [&>div]:border-none [&>div]:bg-[#222]"
-              placeholder={isLoadingContacts ? "Loading contacts..." : "Search and select members"}
+              placeholder={
+                isLoadingContacts ? "Loading contacts..." : "Search and select members"
+              }
               value={selectedContacts}
               onChange={setSelectedContacts}
               emptyIndicator={
                 <p className="text-center text-sm leading-10 text-gray-500">
-                  {masterContactList.length === 0 
-                    ? "No contacts available" 
-                    : "No matching contacts found"}
+                  {displayContacts.length === 0
+                    ? "No matching contacts found"
+                    : null}
                 </p>
               }
               loadingIndicator={
