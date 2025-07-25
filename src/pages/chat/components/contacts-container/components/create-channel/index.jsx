@@ -60,8 +60,11 @@ const CreateChannel = () => {
       setDisplayContacts(masterContactList);
       return;
     }
-    const filtered = masterContactList.filter((contact) =>
-      contact.label.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = masterContactList.filter(
+      (contact) =>
+        contact &&
+        typeof contact.label === "string" &&
+        contact.label.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setDisplayContacts(filtered);
   };
