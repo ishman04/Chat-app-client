@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "../../../../../../lib/api-client";
-import { CREATE_CHANNEL_ROUTE, GET_ALL_CONTACT_ROUTES } from "../../../../../../utils/constants";
+import { CREATE_CHANNEL_ROUTE, GET_ALL_CONTACT_ROUTES, SEARCH_CONTACTS_ROUTES } from "../../../../../../utils/constants";
 import { useAppStore } from "../../../../../../store";
 import MultipleSelector from "@/components/ui/multipleselect";
 import { StatusCodes } from "http-status-codes";
@@ -66,7 +66,7 @@ const CreateChannel = () => {
   }
 
   try {
-    const response = await apiClient.post("/search", {
+    const response = await apiClient.post(SEARCH_CONTACTS_ROUTES, {
       searchTerm,
     }, {
       withCredentials: true,
