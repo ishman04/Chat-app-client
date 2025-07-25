@@ -24,7 +24,8 @@ import { toast } from "sonner";
 
 const CreateChannel = () => {
   const [newChannelModel, setNewChannelModel] = useState(false);
-  const [allContacts, setAllContacts] = useState([]);
+  const [masterContactList, setMasterContactList] = useState([]);
+  const [displayContacts, setDisplayContacts] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState([]);
   const [channelName, setChannelName] = useState("");
   const [isLoadingContacts, setIsLoadingContacts] = useState(false);
@@ -38,7 +39,8 @@ const CreateChannel = () => {
           withCredentials: true,
         });
         if (response.status === StatusCodes.OK && response.data.data) {
-          setAllContacts(response.data.data);
+          setMasterContactList(response.data.data);
+          setDisplayContacts(response.data.data);
         }
       } catch (err) {
         console.error("Failed to load contacts:", err);
@@ -52,6 +54,17 @@ const CreateChannel = () => {
       getAllContactsForChannel();
     }
   }, [newChannelModel]);
+
+  const handleSearch = (searchTerm) => {
+    if (!searchTerm) {
+      setDisplayContacts(masterContactList);
+      return;
+    }
+    const filtered = masterContactList.filter((contact) =>
+      contact.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setDisplayContacts(filtered);
+  };
 
   const createChannel = async () => {
     if (channelName.trim().length <= 0) {
@@ -118,7 +131,8 @@ const CreateChannel = () => {
 
           <div className="mt-4">
             <MultipleSelector
-              defaultOptions={allContacts}
+              options={displayContacts}
+              onSearch={handleSearch}
               disabled={isLoadingContacts}
               className="bg-[#222] border-none text-white placeholder-gray-400 [&>div]:border-none [&>div]:bg-[#222]"
               placeholder={isLoadingContacts ? "Loading contacts..." : "Search and select members"}
