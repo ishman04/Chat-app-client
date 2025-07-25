@@ -12,24 +12,23 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "../../../../../../components/ui/dialog";
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { apiClient } from "../../../../../../lib/api-client";
+import { apiClient } from "../../../lib/api-client";
 import {
   CREATE_CHANNEL_ROUTE,
   GET_ALL_CONTACT_ROUTES,
-  SEARCH_CONTACTS_ROUTES,
-} from "../../../../../../utils/constants";
-import { useAppStore } from "../../../../../../store";
-import MultipleSelector from "@/components/ui/multipleselect";
+} from "../../../utils/constants";
+import { useAppStore } from "../../../store";
+import { MultiSelect } from "@/components/ui/multi-select"; // Assuming the file is multi-select.jsx
 import { StatusCodes } from "http-status-codes";
 import { toast } from "sonner";
 
 const CreateChannel = () => {
   const [newChannelModel, setNewChannelModel] = useState(false);
-  const [masterContactList, setMasterContactList] = useState([]);
-  const [displayContacts, setDisplayContacts] = useState([]);
+  // 1. Simplified state: Only one list for all contacts is needed.
+  const [allContacts, setAllContacts] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState([]);
   const [channelName, setChannelName] = useState("");
   const [isLoadingContacts, setIsLoadingContacts] = useState(false);
@@ -42,16 +41,13 @@ const CreateChannel = () => {
         const response = await apiClient.get(GET_ALL_CONTACT_ROUTES, {
           withCredentials: true,
         });
-        console.log(response)
 
         if (response.status === StatusCodes.OK && response.data.data) {
           const formattedContacts = response.data.data.map((user) => ({
             label: user.label,
-            value: user.value
+            value: user.value,
           }));
-          setMasterContactList(formattedContacts);
-          setDisplayContacts(formattedContacts);
-
+          setAllContacts(formattedContacts);
         }
       } catch (err) {
         console.error("Failed to load contacts:", err);
@@ -61,43 +57,13 @@ const CreateChannel = () => {
       }
     };
 
+    // Fetch contacts only when the dialog is opened.
     if (newChannelModel) {
       getAllContactsForChannel();
     }
   }, [newChannelModel]);
 
-  const handleSearch = async (searchTerm) => {
-    if (!searchTerm) {
-      setDisplayContacts([...masterContactList])
-    }
-
-    try {
-      const response = await apiClient.post(
-        SEARCH_CONTACTS_ROUTES,
-        { searchTerm },
-        { withCredentials: true }
-      );
-
-      if (response.status === StatusCodes.OK && response.data.data) {
-        const formatted = response.data.data.map((user) => ({
-          label:
-            user.firstName && user.lastName
-              ? `${user.firstName} ${user.lastName}`
-              : user.email || "Unnamed",
-          value: String(user._id),
-        }));
-
-        console.log("Formatted contacts:", formatted);
-        setDisplayContacts([...formatted]);
-      } else {
-        setDisplayContacts([]);
-      }
-    } catch (error) {
-      console.error("Search error:", error);
-      toast.error("Failed to search contacts.");
-      setDisplayContacts([]);
-    }
-  };
+  // 2. Removed the `handleSearch` function. It's not needed for client-side filtering.
 
   const createChannel = async () => {
     if (!channelName.trim()) {
@@ -167,30 +133,21 @@ const CreateChannel = () => {
           </div>
 
           <div className="mt-4">
-            <pre className="text-white text-xs">
-  {JSON.stringify(displayContacts, null, 2)}
-</pre>
-            <MultipleSelector
-              
-              options={displayContacts}
-              
+            <MultiSelect
+              // 3. Pass the single source of truth for contacts here.
+              options={allContacts}
+              value={selectedContacts}
+              onChange={setSelectedContacts}
               disabled={isLoadingContacts}
               className="bg-[#222] border-none text-white placeholder-gray-400 [&>div]:border-none [&>div]:bg-[#222]"
               placeholder={
-                isLoadingContacts ? "Loading contacts..." : "Search and select members"
+                isLoadingContacts
+                  ? "Loading contacts..."
+                  : "Search and select members"
               }
-              value={selectedContacts}
-              onChange={setSelectedContacts}
               emptyIndicator={
                 <p className="text-center text-sm leading-10 text-gray-500">
-                  {displayContacts.length === 0
-                    ? "No matching contacts found"
-                    : null}
-                </p>
-              }
-              loadingIndicator={
-                <p className="text-center text-sm leading-10 text-gray-500">
-                  Searching...
+                  No matching contacts found.
                 </p>
               }
             />
@@ -200,7 +157,12 @@ const CreateChannel = () => {
             <Button
               className="w-full bg-white text-black font-semibold text-base py-3 rounded-md hover:bg-gray-200"
               onClick={createChannel}
-              disabled={isLoadingContacts}
+              // 4. Improved disabled logic for better UX.
+              disabled={
+                isLoadingContacts ||
+                channelName.trim() === "" ||
+                selectedContacts.length < 2
+              }
             >
               {isLoadingContacts ? "Creating..." : "Create Channel"}
             </Button>
