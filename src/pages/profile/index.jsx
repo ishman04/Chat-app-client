@@ -34,8 +34,9 @@ const Profile = () => {
       setSelectedColor(userInfo.color)
     }
     if (userInfo.image) {
-      setImage(`${HOST}/${userInfo.image}`)
-    } else {
+  setImage(userInfo.image) // no need to prefix with HOST
+}
+ else {
       setImage(null)
     }
   }, [userInfo, setUserInfo])
@@ -82,11 +83,12 @@ const Profile = () => {
   const handleFileInputClick = () => fileInputRef.current.click()
 
   const handleImageChange = async (event) => {
-    const file = event.target.files[0]
-    if (file) {
-      const formData = new FormData()
-      formData.append('profile-image', file)
+  const file = event.target.files[0]
+  if (file) {
+    const formData = new FormData()
+    formData.append('profile-image', file)
 
+    try {
       const response = await apiClient.post(
         ADD_PROFILE_IMAGE_ROUTE,
         formData,
@@ -94,15 +96,18 @@ const Profile = () => {
       )
 
       if (response.status === StatusCodes.OK) {
+        const uploadedImageUrl = response.data.data.image // this will be a full Cloudinary URL
         setUserInfo(response.data.data)
+        setImage(uploadedImageUrl) // directly use the Cloudinary URL
         toast.success('Profile image updated successfully')
       }
-
-      const reader = new FileReader()
-      reader.onload = () => setImage(reader.result)
-      reader.readAsDataURL(file)
+    } catch (error) {
+      console.error('Upload error:', error)
+      toast.error('Image upload failed')
     }
   }
+}
+
 
   const handleDeleteImage = async () => {
     const response = await apiClient.delete(REMOVE_PROFILE_IMAGE_ROUTE, {

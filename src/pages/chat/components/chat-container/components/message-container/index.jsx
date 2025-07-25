@@ -69,32 +69,50 @@ const MessageContainer = () => {
     }
   }, [selectedChatMessages]);
 
-  const downloadFile = async (file) => {
-    setIsDownloading(true)
-    setFileDownloadProgress(0);
-    const response = await apiClient.get(`${HOST}/${file}`, {
+ const downloadFile = async (file) => {
+  setIsDownloading(true);
+  setFileDownloadProgress(0);
+  
+  try {
+    const response = await apiClient.get(file, {
       responseType: "blob",
-      onDownloadProgress:(progressEvent) => {
-        const {loaded,total} = progressEvent;
-        const percentCompleted = Math.round((loaded*100)/total)
-        setFileDownloadProgress(percentCompleted)
-        
-      }
-    },[setIsDownloading,setFileDownloadProgress]);
-    const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
+      onDownloadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          setFileDownloadProgress(percentCompleted);
+        }
+      },
+    });
+
+    // Create download link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement("a");
-    link.href = urlBlob;
-    link.setAttribute(
-      "download",
-      file.replace(/\\/g, "/").split("uploads/").pop()
-    );
+    link.href = url;
+    
+    // Extract filename from URL or use a default
+    const filename = file.split('/').pop() || `download-${Date.now()}`;
+    link.setAttribute("download", filename);
+    
     document.body.appendChild(link);
     link.click();
-    link.remove();
-    window.URL.revokeObjectURL(urlBlob);
-    setIsDownloading(false)
+    
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      setIsDownloading(false);
+      setFileDownloadProgress(0);
+    }, 100);
+    
+  } catch (error) {
+    console.error("Download failed:", error);
+    setIsDownloading(false);
     setFileDownloadProgress(0);
-  };
+    // Add error handling UI here
+  }
+};
 
   const checkIfImage = (filePath) => {
     const imageRegex =
@@ -142,7 +160,8 @@ const MessageContainer = () => {
             >
               {checkIfImage(message.fileUrl) ? (
                 <img
-                  src={`${HOST}/${message.fileUrl}`}
+                  src={message.fileUrl}
+                  referrerPolicy="no-referrer-when-downgrade"
                   className="w-full object-cover max-h-[300px] cursor-pointer"
                   onClick={() => {
                     setShowImage(true);
@@ -234,7 +253,7 @@ const isSentByUser = senderId?.toString() === userId?.toString();
           >
             {checkIfImage(message.fileUrl) ? (
               <img
-                src={`${HOST}/${message.fileUrl}`}
+                src={message.fileUrl}
                 className="w-full object-cover max-h-[300px] cursor-pointer"
                 onClick={() => {
                   setShowImage(true);
@@ -317,7 +336,7 @@ const isSentByUser = senderId?.toString() === userId?.toString();
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 backdrop-blur-sm">
           <div className="relative max-w-[90%] max-h-[90%]">
             <img
-              src={`${HOST}/${imageURL}`}
+              src={imageURL}
               className="max-h-[80vh] max-w-full rounded-lg object-contain"
             />
             <div className="absolute top-4 right-4 flex gap-3">
