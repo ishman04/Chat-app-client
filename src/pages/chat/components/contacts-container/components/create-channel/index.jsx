@@ -42,18 +42,16 @@ const CreateChannel = () => {
         const response = await apiClient.get(GET_ALL_CONTACT_ROUTES, {
           withCredentials: true,
         });
+        console.log(response)
 
         if (response.status === StatusCodes.OK && response.data.data) {
           const formattedContacts = response.data.data.map((user) => ({
-            label:
-              user.firstName && user.lastName
-                ? `${user.firstName} ${user.lastName}`
-                : user.email || "Unnamed",
-            value: String(user._id),
+            label: user.label,
+            value: user.value
           }));
-
           setMasterContactList(formattedContacts);
           setDisplayContacts(formattedContacts);
+
         }
       } catch (err) {
         console.error("Failed to load contacts:", err);
@@ -70,8 +68,7 @@ const CreateChannel = () => {
 
   const handleSearch = async (searchTerm) => {
     if (!searchTerm) {
-      setDisplayContacts(masterContactList);
-      return;
+      setDisplayContacts([...masterContactList])
     }
 
     try {
@@ -91,7 +88,7 @@ const CreateChannel = () => {
         }));
 
         console.log("Formatted contacts:", formatted);
-        setDisplayContacts(formatted);
+        setDisplayContacts([...formatted]);
       } else {
         setDisplayContacts([]);
       }
@@ -170,9 +167,13 @@ const CreateChannel = () => {
           </div>
 
           <div className="mt-4">
+            <pre className="text-white text-xs">
+  {JSON.stringify(displayContacts, null, 2)}
+</pre>
             <MultipleSelector
+              
               options={displayContacts}
-              onSearch={handleSearch}
+              
               disabled={isLoadingContacts}
               className="bg-[#222] border-none text-white placeholder-gray-400 [&>div]:border-none [&>div]:bg-[#222]"
               placeholder={
