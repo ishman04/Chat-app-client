@@ -42,8 +42,8 @@ const CreateChannel = () => {
         if (response.status === StatusCodes.OK && response.data.data) {
           // Transform API data to match MultipleSelector's expected format
           const formattedContacts = response.data.data.map(contact => ({
-            label: contact.label || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || contact.email,
-            value: contact.value || contact._id || contact.id
+            label: contact.label,
+            value: contact.value 
           }));
           
           setMasterContactList(formattedContacts);
