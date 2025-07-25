@@ -41,10 +41,7 @@ const CreateChannel = () => {
         
         if (response.status === StatusCodes.OK && response.data.data) {
           // Transform API data to match MultipleSelector's expected format
-          const formattedContacts = response.data.data.map(contact => ({
-            label: contact.label,
-            value: contact.value 
-          }));
+          const formattedContacts = response.data.data
           
           setMasterContactList(formattedContacts);
           setDisplayContacts(formattedContacts);
@@ -62,18 +59,35 @@ const CreateChannel = () => {
     }
   }, [newChannelModel]);
 
-  const handleSearch = (searchTerm) => {
-    if (!searchTerm) {
-      setDisplayContacts(masterContactList);
-      return;
-    }
-    
-    const filtered = masterContactList.filter(contact => 
-      contact.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    
-    setDisplayContacts(filtered.length > 0 ? filtered : []);
-  };
+  const handleSearch = async (searchTerm) => {
+  if (!searchTerm) {
+    setDisplayContacts(masterContactList);
+    return;
+  }
+
+  try {
+    const response = await apiClient.post("/search", {
+      searchTerm,
+    }, {
+      withCredentials: true,
+    });
+
+    if (response.status === StatusCodes.OK && response.data.data) {
+      const formatted = response.data.data.map(user => ({
+        label: `${user.firstName} ${user.lastName}`,
+        value: user._id,
+      }));
+      setDisplayContacts(formatted);
+    } else {
+      setDisplayContacts([]);
+    }
+  } catch (error) {
+    console.error("Search error:", error);
+    toast.error("Failed to search contacts.");
+    setDisplayContacts([]);
+  }
+};
+
 
   const createChannel = async () => {
     if (!channelName.trim()) {
