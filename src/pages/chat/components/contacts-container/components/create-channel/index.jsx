@@ -4,7 +4,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaPlus } from "react-icons/fa";
 import {
   Dialog,
@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "../../../../../../lib/api-client";
-import { CREATE_CHANNEL_ROUTE, SEARCH_CONTACTS_ROUTES } from "../../../../../../utils/constants";
+import { CREATE_CHANNEL_ROUTE, GET_ALL_CONTACT_ROUTES } from "../../../../../../utils/constants";
 import { useAppStore } from "../../../../../../store";
 import MultipleSelector from "@/components/ui/multipleselect";
 import { StatusCodes } from "http-status-codes";
@@ -24,60 +24,59 @@ import { toast } from "sonner";
 
 const CreateChannel = () => {
   const [newChannelModel, setNewChannelModel] = useState(false);
-  const [searchedContacts, setSearchedContacts] = useState([]);
+  const [allContacts, setAllContacts] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState([]);
   const [channelName, setChannelName] = useState("");
+  const [isLoadingContacts, setIsLoadingContacts] = useState(false);
   const { addChannel } = useAppStore();
 
-  const handleSearch = async (value) => {
-    if (typeof value !== 'string' || value.trim().length < 1) {
-      setSearchedContacts([]);
-      return;
-    }
-
-    try {
-      const response = await apiClient.post(
-        SEARCH_CONTACTS_ROUTES,
-        { searchTerm: value.trim() },
-        { withCredentials: true }
-      );
-
-      if (response.status === StatusCodes.OK && response.data.data) {
-        // --- THIS IS THE FIX ---
-        // Transform the raw user data into the { value, label } format
-        // that the MultipleSelector component expects.
-        const contacts = response.data.data.map(contact => ({
-          value: contact._id,
-          label: contact.firstName ? `${contact.firstName} ${contact.lastName}` : contact.email,
-        }));
-        setSearchedContacts(contacts);
-      } else {
-        setSearchedContacts([]);
+  useEffect(() => {
+    const getAllContactsForChannel = async () => {
+      setIsLoadingContacts(true);
+      try {
+        const response = await apiClient.get(GET_ALL_CONTACT_ROUTES, {
+          withCredentials: true,
+        });
+        if (response.status === StatusCodes.OK && response.data.data) {
+          setAllContacts(response.data.data);
+        }
+      } catch (err) {
+        console.error("Failed to load contacts:", err);
+        toast.error("Failed to load contacts.");
+      } finally {
+        setIsLoadingContacts(false);
       }
-    } catch (err) {
-      console.error("Failed to search contacts:", err);
-      toast.error("Error searching for contacts.");
-      setSearchedContacts([]);
+    };
+
+    if (newChannelModel) {
+      getAllContactsForChannel();
     }
-  };
+  }, [newChannelModel]);
 
   const createChannel = async () => {
+    if (channelName.trim().length <= 0) {
+      return toast.error("Channel name is required.");
+    }
+    if (selectedContacts.length < 2) {
+      return toast.error("Please select at least two members.");
+    }
+    
     try {
-      if (channelName.trim().length > 0 && selectedContacts.length > 1) {
-        const response = await apiClient.post(CREATE_CHANNEL_ROUTE, {
-          name: channelName,
-          members: selectedContacts.map((contact) => contact.value)
-        }, { withCredentials: true });
+      const response = await apiClient.post(CREATE_CHANNEL_ROUTE, {
+        name: channelName,
+        members: selectedContacts.map((contact) => contact.value)
+      }, { withCredentials: true });
 
-        if (response.status === StatusCodes.CREATED) {
-          setChannelName("");
-          setSelectedContacts([]);
-          setNewChannelModel(false);
-          addChannel(response.data.data);
-        }
+      if (response.status === StatusCodes.CREATED) {
+        setChannelName("");
+        setSelectedContacts([]);
+        setNewChannelModel(false);
+        addChannel(response.data.data);
+        toast.success("Channel created successfully.");
       }
     } catch (error) {
       console.log(error);
+      toast.error("Failed to create channel.");
     }
   };
 
@@ -119,15 +118,15 @@ const CreateChannel = () => {
 
           <div className="mt-4">
             <MultipleSelector
-              options={searchedContacts}
-              onSearch={handleSearch}
+              defaultOptions={allContacts}
+              disabled={isLoadingContacts}
               className="bg-[#222] border-none text-white placeholder-gray-400 [&>div]:border-none [&>div]:bg-[#222]"
-              placeholder="Search and select members"
+              placeholder={isLoadingContacts ? "Loading contacts..." : "Search and select members"}
               value={selectedContacts}
               onChange={setSelectedContacts}
               emptyIndicator={
                 <p className="text-center text-sm leading-10 text-gray-500">
-                  Type to search for contacts to add.
+                  No contacts found.
                 </p>
               }
             />
