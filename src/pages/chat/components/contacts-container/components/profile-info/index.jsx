@@ -1,7 +1,7 @@
 import { Avatar, AvatarImage } from "@radix-ui/react-avatar";
 import { getColor } from "../../../../../../lib/utils";
 import { useAppStore } from "../../../../../../store";
-import { HOST, LOGOUT_ROUTE } from "../../../../../../utils/constants";
+import { LOGOUT_ROUTE } from "../../../../../../utils/constants";
 import {
   Tooltip,
   TooltipContent,
@@ -9,32 +9,34 @@ import {
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
 import { FiEdit2 } from "react-icons/fi";
-import { IoLogOut, IoPowerSharp } from "react-icons/io5";
+import { IoPowerSharp } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../../../../../../lib/api-client";
 import { toast } from "sonner";
 import { StatusCodes } from "http-status-codes";
 
 const ProfileInfo = () => {
-    const navigate = useNavigate()
+  const navigate = useNavigate();
   const { userInfo, setUserInfo } = useAppStore();
-  const handleLogout = async() =>{
+
+  const handleLogout = async () => {
     try {
-        const response = await apiClient.post(LOGOUT_ROUTE,{},{withCredentials:true})
-        if(response.status===StatusCodes.OK){
-            setUserInfo(null)
-            navigate('/auth')
-            toast.success('Logged out successfully')
-        }
+      const response = await apiClient.post(LOGOUT_ROUTE, {}, { withCredentials: true });
+      if (response.status === StatusCodes.OK) {
+        setUserInfo(null);
+        navigate('/auth');
+        toast.success('Logged out successfully');
+      }
     } catch (error) {
-        console.log(error)
-        toast.error("Something went wrong")
+      console.log(error);
+      toast.error("Something went wrong");
     }
-  }
+  };
+
   return (
-    <div className="absolute bottom-0 left-0 h-16 w-full px-5 flex items-center justify-start bg-neutral-900">
-      <div className="flex gap-3 items-center justify-center">
-        <div className=" w-12 h-12 relative">
+    <div className="h-20 w-full px-3 sm:px-5 flex items-center justify-between bg-neutral-900">
+      <div className="flex gap-3 items-center">
+        <div className="w-12 h-12 relative flex-shrink-0">
           <Avatar className="h-12 w-12 rounded-full overflow-hidden">
             {userInfo.image ? (
               <AvatarImage
@@ -55,25 +57,24 @@ const ProfileInfo = () => {
             )}
           </Avatar>
         </div>
-        <div>
-          {userInfo.firstName && userInfo.lastName ? (
+        <div className="truncate hidden sm:block">
+          {userInfo.firstName && userInfo.lastName && (
             <div className="text-slate-100 poppins-regular text-sm">{`${userInfo.firstName} ${userInfo.lastName}`}</div>
-          ) : (
-            ""
           )}
         </div>
       </div>
-      <div className="flex gap-5">
+      <div className="flex gap-3 sm:gap-5">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger>
-              <FiEdit2 className="text-gray-500 text-xl font ml-3"
-              onClick={()=>navigate('/profile')}
+              <FiEdit2
+                className="text-gray-400 text-xl hover:text-white"
+                onClick={() => navigate('/profile')}
               />
             </TooltipTrigger>
             <TooltipContent
               side="top"
-              className="bg-[#1f1f1f] text-slate-100  px-2 py-1.5 mb-1.5 rounded-md shadow-lg text-sm font-medium "
+              className="bg-[#1f1f1f] text-slate-100 px-2 py-1.5 mb-1.5 rounded-md shadow-lg text-sm font-medium"
             >
               <p>Edit profile</p>
             </TooltipContent>
@@ -82,13 +83,14 @@ const ProfileInfo = () => {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger>
-              <IoPowerSharp className="text-red-500 text-xl font ml-3"
-              onClick={handleLogout}
+              <IoPowerSharp
+                className="text-red-500 text-xl hover:text-red-400"
+                onClick={handleLogout}
               />
             </TooltipTrigger>
             <TooltipContent
               side="top"
-              className="bg-[#1f1f1f] text-slate-100  px-2 py-1.5 mb-1.5 rounded-md shadow-lg text-sm font-medium "
+              className="bg-[#1f1f1f] text-slate-100 px-2 py-1.5 mb-1.5 rounded-md shadow-lg text-sm font-medium"
             >
               <p>Logout</p>
             </TooltipContent>

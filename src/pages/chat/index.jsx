@@ -27,7 +27,6 @@ const Chat = () => {
 
   return (
     <div className="flex h-screen text-white bg-[#0e0e0e] overflow-hidden relative font-sans">
-      {/* Upload Overlay */}
       {isUploading && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center gap-5 text-white">
           <h5 className="text-3xl md:text-5xl font-semibold animate-pulse">
@@ -39,7 +38,6 @@ const Chat = () => {
         </div>
       )}
 
-      {/* Download Overlay */}
       {isDownloading && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center gap-5 text-white">
           <h5 className="text-3xl md:text-5xl font-semibold animate-pulse">
@@ -51,14 +49,16 @@ const Chat = () => {
         </div>
       )}
 
-      {/* Left Sidebar */}
-      <ContactsContainer />
+      <div className={`w-full md:w-auto ${selectedChatType !== undefined ? 'hidden md:flex' : 'flex'}`}>
+        <ContactsContainer />
+      </div>
 
-      {/* Right Panel */}
       {selectedChatType === undefined ? (
         <EmptyChatContainer />
       ) : (
-        <ChatContainer />
+        <div className="flex-1 w-full md:w-auto">
+          <ChatContainer />
+        </div>
       )}
     </div>
   );
