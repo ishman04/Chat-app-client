@@ -30,7 +30,6 @@ const CreateChannel = () => {
   const { addChannel } = useAppStore();
 
   const handleSearch = async (value) => {
-    // Defensive check: ensure value is a string and not empty
     if (typeof value !== 'string' || value.trim().length < 1) {
       setSearchedContacts([]);
       return;
@@ -39,18 +38,25 @@ const CreateChannel = () => {
     try {
       const response = await apiClient.post(
         SEARCH_CONTACTS_ROUTES,
-        { searchTerm: value.trim() }, // Trim the value
+        { searchTerm: value.trim() },
         { withCredentials: true }
       );
 
-      if (response.status === StatusCodes.OK) {
-        setSearchedContacts(response.data.data);
+      if (response.status === StatusCodes.OK && response.data.data) {
+        // --- THIS IS THE FIX ---
+        // Transform the raw user data into the { value, label } format
+        // that the MultipleSelector component expects.
+        const contacts = response.data.data.map(contact => ({
+          value: contact._id,
+          label: contact.firstName ? `${contact.firstName} ${contact.lastName}` : contact.email,
+        }));
+        setSearchedContacts(contacts);
       } else {
         setSearchedContacts([]);
       }
     } catch (err) {
       console.error("Failed to search contacts:", err);
-      toast.error("Error searching for contacts."); // Inform the user of the failure
+      toast.error("Error searching for contacts.");
       setSearchedContacts([]);
     }
   };
