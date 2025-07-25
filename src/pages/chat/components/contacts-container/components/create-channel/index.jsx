@@ -27,11 +27,11 @@ import { toast } from "sonner";
 
 const CreateChannel = () => {
   const [newChannelModel, setNewChannelModel] = useState(false);
-  // 1. Simplified state. Only one list is needed for all contacts.
   const [allContacts, setAllContacts] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState([]);
   const [channelName, setChannelName] = useState("");
   const [isLoadingContacts, setIsLoadingContacts] = useState(false);
+  const [selectorOpen, setSelectorOpen] = useState(false); // 🆕 Added
   const { addChannel } = useAppStore();
 
   useEffect(() => {
@@ -47,7 +47,6 @@ const CreateChannel = () => {
             label: user.label,
             value: user.value,
           }));
-          // Only set the single list of all contacts.
           setAllContacts(formattedContacts);
         }
       } catch (err) {
@@ -62,9 +61,6 @@ const CreateChannel = () => {
       getAllContactsForChannel();
     }
   }, [newChannelModel]);
-
-  // 2. Removed `handleSearch` function as it's no longer needed.
-  // The multi-select component will handle filtering internally.
 
   const createChannel = async () => {
     if (!channelName.trim()) {
@@ -88,8 +84,8 @@ const CreateChannel = () => {
         setChannelName("");
         setSelectedContacts([]);
         setNewChannelModel(false);
-        addChannel(response.data.data);
         toast.success("Channel created successfully.");
+        addChannel(response.data.data);
       }
     } catch (error) {
       console.error("Channel creation error:", error);
@@ -135,17 +131,21 @@ const CreateChannel = () => {
 
           <div className="mt-4">
             <MultipleSelector
-              // 3. Pass the single source of truth for contacts.
               options={allContacts}
               disabled={isLoadingContacts}
+              value={selectedContacts}
+              onChange={(selected) => {
+                setSelectedContacts(selected);
+                setSelectorOpen(false); 
+              }}
+              open={selectorOpen} 
+              onOpenChange={setSelectorOpen}
               className="bg-[#222] border-none text-white placeholder-gray-400 [&>div]:border-none [&>div]:bg-[#222]"
               placeholder={
                 isLoadingContacts
                   ? "Loading contacts..."
                   : "Search and select members"
               }
-              value={selectedContacts}
-              onChange={setSelectedContacts}
               emptyIndicator={
                 <p className="text-center text-sm leading-10 text-gray-500">
                   No matching contacts found
@@ -158,7 +158,6 @@ const CreateChannel = () => {
             <Button
               className="w-full bg-white text-black font-semibold text-base py-3 rounded-md hover:bg-gray-200"
               onClick={createChannel}
-              // 4. Improved disabled logic for better UX
               disabled={
                 isLoadingContacts ||
                 channelName.trim() === "" ||
