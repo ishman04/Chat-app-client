@@ -273,9 +273,9 @@ const MultipleSelector = React.forwardRef(
                   key={option.value}
                   className={cn(
                     "bg-[#333] text-white p-2 rounded-md",
-    "data-[disabled]:bg-[#444] data-[disabled]:text-gray-400",
-    "data-[fixed]:bg-[#444] data-[fixed]:text-gray-400",
-    badgeClassName
+                    "data-[disabled]:bg-[#444] data-[disabled]:text-gray-400",
+                    "data-[fixed]:bg-[#444] data-[fixed]:text-gray-400",
+                    badgeClassName
                   )}
                   data-fixed={option.fixed}
                   data-disabled={disabled || undefined}
@@ -402,6 +402,7 @@ const MultipleSelector = React.forwardRef(
                                 const newOptions = [...selected, option];
                                 setSelected(newOptions);
                                 onChange?.(newOptions);
+                                inputRef.current?.blur();
                               }}
                               className={cn(
                                 "cursor-pointer",
