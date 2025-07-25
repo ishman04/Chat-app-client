@@ -4,7 +4,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FaPlus } from "react-icons/fa";
 import {
   Dialog,
@@ -16,35 +16,49 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "../../../../../../lib/api-client";
-import { CREATE_CHANNEL_ROUTE, GET_ALL_CONTACT_ROUTES } from "../../../../../../utils/constants";
+import { CREATE_CHANNEL_ROUTE, SEARCH_CONTACTS_ROUTES } from "../../../../../../utils/constants";
 import { useAppStore } from "../../../../../../store";
 import MultipleSelector from "@/components/ui/multipleselect";
 import { StatusCodes } from "http-status-codes";
+import { toast } from "sonner";
 
 const CreateChannel = () => {
   const [newChannelModel, setNewChannelModel] = useState(false);
-  const [allContacts, setAllContacts] = useState([]);
+  const [searchedContacts, setSearchedContacts] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState([]);
   const [channelName, setChannelName] = useState("");
   const { addChannel } = useAppStore();
 
-  useEffect(() => {
-    const getData = async () => {
-      try {
-        const response = await apiClient.get(GET_ALL_CONTACT_ROUTES, {
-          withCredentials: true,
-        });
+  const handleSearch = async (value) => {
+    // Defensive check: ensure value is a string and not empty
+    if (typeof value !== 'string' || value.trim().length < 1) {
+      setSearchedContacts([]);
+      return;
+    }
+
+    try {
+      const response = await apiClient.post(
+        SEARCH_CONTACTS_ROUTES,
+        { searchTerm: value.trim() }, // Trim the value
+        { withCredentials: true }
+      );
+
+      if (response.status === StatusCodes.OK && response.data.data) {
         const contacts = response.data.data.map(contact => ({
           value: contact._id,
           label: contact.firstName ? `${contact.firstName} ${contact.lastName}` : contact.email,
         }));
-        setAllContacts(contacts);
-      } catch (err) {
-        console.error(err);
+        setSearchedContacts(contacts);
+      } else {
+        // Handle cases where API returns OK but no data
+        setSearchedContacts([]);
       }
-    };
-    getData();
-  }, []);
+    } catch (err) {
+      console.error("Failed to search contacts:", err);
+      toast.error("Error searching for contacts."); // Inform the user of the failure
+      setSearchedContacts([]);
+    }
+  };
 
   const createChannel = async () => {
     try {
@@ -104,14 +118,15 @@ const CreateChannel = () => {
 
           <div className="mt-4">
             <MultipleSelector
+              options={searchedContacts}
+              onSearch={handleSearch}
               className="bg-[#222] border-none text-white placeholder-gray-400 [&>div]:border-none [&>div]:bg-[#222]"
-              defaultOptions={allContacts}
-              placeholder="Select members"
+              placeholder="Search and select members"
               value={selectedContacts}
               onChange={setSelectedContacts}
               emptyIndicator={
                 <p className="text-center text-sm leading-10 text-gray-500">
-                  No contacts found.
+                  Type to search for contacts to add.
                 </p>
               }
             />
