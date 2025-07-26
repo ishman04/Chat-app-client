@@ -13,7 +13,7 @@ export const SocketProvider = ({ children }) => {
   const socket = useRef();
 
   // 🧠 Extract state once using hooks (valid usage)
-  const { userInfo, selectedChatData, selectedChatType, addMessage } =
+  const { userInfo, selectedChatData, selectedChatType, addMessage,addTypingUser,removeTypingUser,setTypingUsers } =
     useAppStore();
 
   // ⏺️ Refs to store latest selected chat
@@ -27,6 +27,7 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     selectedChatDataRef.current = selectedChatData;
     selectedChatTypeRef.current = selectedChatType;
+    setTypingUsers([]);
   }, [selectedChatData, selectedChatType]);
 
   useEffect(() => {
@@ -77,12 +78,29 @@ export const SocketProvider = ({ children }) => {
       socket.current.on("receiveMessage", handleRecieveMessage);
       socket.current.on("receive-channel-message", handleRecieveChannelMessage);
 
+      const handleTypingEvent = ({senderId, isChannel,channelId, senderName}) => {
+        const chatData = selectedChatDataRef.current;
+        const chatType = selectedChatTypeRef.current;
+        if (
+          (isChannel && chatType === 'channel' && chatData._id === channelId) ||
+          (!isChannel && chatType === 'contact' && chatData._id === senderId)
+        ) {
+          addTypingUser({ id: senderId, firstName: senderName });
+        }
+      }
+      const handleStopTypingEvent = ({ senderId }) => {
+        removeTypingUser(senderId);
+      };
+
+      socket.current.on("typing", handleTypingEvent);
+      socket.current.on("stop-typing", handleStopTypingEvent);
+
       return () => {
         socket.current.disconnect();
         console.log("🔌 Socket disconnected");
       };
     }
-  }, [userInfo]);
+  }, [userInfo, addMessage, addTypingUser, removeTypingUser]);
 
   return (
     <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>

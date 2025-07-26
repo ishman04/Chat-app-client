@@ -16,6 +16,20 @@ const MessageBar = () => {
   const socket = useSocket();
   const { userInfo, selectedChatType, selectedChatData, setIsUploading, setFileUploadProgress } = useAppStore();
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const typingTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+        if(typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        if (socket?.current && selectedChatData) {
+            socket.current.emit("stop-typing", {
+                recipient: selectedChatData._id,
+                channelId: selectedChatData._id,
+                isChannel: selectedChatType === 'channel'
+            });
+        }
+    };
+  }, [selectedChatData, selectedChatType, socket]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -54,8 +68,49 @@ const MessageBar = () => {
         channelId: selectedChatData._id
       });
     }
+
+    if (socket.current) {
+        clearTimeout(typingTimeoutRef.current);
+        socket.current.emit("stop-typing", {
+            recipient: selectedChatData._id,
+            channelId: selectedChatData._id,
+            isChannel: selectedChatType === 'channel'
+        });
+    }
+
     setMessage("");
+
+
   };
+
+  const handleTyping = (e) => {
+    setMessage(e.target.value);
+
+    if (socket?.current) {
+        // Clear previous timeout
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+        }
+
+        // Emit that user is typing
+        socket.current.emit("typing", {
+            recipient: selectedChatData._id,
+            channelId: selectedChatData._id,
+            isChannel: selectedChatType === 'channel'
+        });
+
+        // Set a timeout to emit "stop-typing" after 2 seconds of inactivity
+        typingTimeoutRef.current = setTimeout(() => {
+            socket.current.emit("stop-typing", {
+                recipient: selectedChatData._id,
+                channelId: selectedChatData._id,
+                isChannel: selectedChatType === 'channel'
+            });
+            typingTimeoutRef.current = null;
+        }, 2000);
+    }
+  };
+
 
   const handleAttachementClick = () => {
     if (fileInputRef.current) {
@@ -123,7 +178,7 @@ const MessageBar = () => {
           className="flex-1 bg-transparent text-white text-base focus:outline-none placeholder:text-gray-400"
           placeholder="Type a message"
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={handleTyping}
           onKeyDown={(e) => { if(e.key === "Enter") handleSendMessage() }}
         />
         <button

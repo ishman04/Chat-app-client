@@ -8,6 +8,18 @@ export const createChatSlice = (set,get) => ({
     fileUploadProgress: 0,
     fileDownloadProgress: 0,
     channels: [],
+    typingUsers: [],
+    setTypingUsers: (users) => set({ typingUsers: users }),
+    addTypingUser: (user) => {
+        const typingUsers = get().typingUsers;
+        if (!typingUsers.some(u => u.id === user.id)) {
+            set({ typingUsers: [...typingUsers, user] });
+        }
+    },
+    removeTypingUser: (userId) => {
+        const typingUsers = get().typingUsers;
+        set({ typingUsers: typingUsers.filter(u => u.id !== userId) });
+    },
     setChannels: (channels) =>set({channels}),
 
     setIsUploading: (isUploading) => set({isUploading}),
