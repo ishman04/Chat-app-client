@@ -13,7 +13,7 @@ export const SocketProvider = ({ children }) => {
   const socket = useRef();
 
   // 🧠 Extract state once using hooks (valid usage)
-  const { userInfo, selectedChatData, selectedChatType, addMessage,addTypingUser,removeTypingUser,setTypingUsers } =
+  const { userInfo, selectedChatData, selectedChatType, addMessage,addTypingUser,removeTypingUser,setTypingUsers,deleteMessage,editMessage } =
     useAppStore();
 
   // ⏺️ Refs to store latest selected chat
@@ -92,6 +92,17 @@ export const SocketProvider = ({ children }) => {
         removeTypingUser(senderId);
       };
 
+      const handleMessageDeleted = ({ messageId }) => {
+        deleteMessage(messageId);
+      };
+
+      const handleMessageEdited = ({ messageId, newContent }) => {
+        editMessage(messageId, newContent);
+      };
+
+      socket.current.on("message-deleted", handleMessageDeleted);
+      socket.current.on("message-edited", handleMessageEdited);
+
       socket.current.on("typing", handleTypingEvent);
       socket.current.on("stop-typing", handleStopTypingEvent);
 
@@ -100,7 +111,7 @@ export const SocketProvider = ({ children }) => {
         console.log("🔌 Socket disconnected");
       };
     }
-  }, [userInfo, addMessage, addTypingUser, removeTypingUser]);
+  }, [userInfo, addMessage, addTypingUser, removeTypingUser, deleteMessage, editMessage]);
 
   return (
     <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>

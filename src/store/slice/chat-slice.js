@@ -7,6 +7,20 @@ export const createChatSlice = (set,get) => ({
     isDownloading: false,
     fileUploadProgress: 0,
     fileDownloadProgress: 0,
+    deleteMessage: (messageId) => {
+        const selectedChatMessages = get().selectedChatMessages;
+        set({
+            selectedChatMessages: selectedChatMessages.filter(msg => msg._id !== messageId)
+        });
+    },
+    editMessage: (messageId, newContent) => {
+        const selectedChatMessages = get().selectedChatMessages;
+        set({
+            selectedChatMessages: selectedChatMessages.map(msg => 
+                msg._id === messageId ? { ...msg, content: newContent } : msg
+            )
+        });
+    },
     channels: [],
     typingUsers: [],
     setTypingUsers: (users) => set({ typingUsers: users }),
