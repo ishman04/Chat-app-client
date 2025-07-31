@@ -44,9 +44,6 @@ export const SocketProvider = ({ children }) => {
       });
 
       const handleRecieveMessage = (message) => {
-        console.log("📩 Message received from backend:", message);
-        console.log("🔍 Current Chat (ref):", selectedChatDataRef.current);
-        console.log("🔍 Chat Type (ref):", selectedChatTypeRef.current);
 
         const chatData = selectedChatDataRef.current;
         const chatType = selectedChatTypeRef.current;
@@ -57,7 +54,6 @@ export const SocketProvider = ({ children }) => {
           (chatData._id === message.sender._id ||
             chatData._id === message.recipient._id)
         ) {
-          console.log("✅ Message matches current chat. Adding...");
           addMessage(message);
         } else {
           console.log("⚠️ Message does not match current chat. Ignored.");

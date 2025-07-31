@@ -47,6 +47,8 @@ const Auth = () => {
   const handleLogin = async () => {
     if(validateLogin()){
         const response = await apiClient.post(LOGIN_ROUTE,{email,password},{withCredentials: true})
+        const message = response.data.message
+        toast.message(message)
         if(response.data.data.id){
           setUserInfo(response.data.data)
             if(response.data.data.profileSetup){
