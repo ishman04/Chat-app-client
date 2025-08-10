@@ -13,7 +13,7 @@ export const SocketProvider = ({ children }) => {
   const socket = useRef();
 
   // 🧠 Extract state once using hooks (valid usage)
-  const { userInfo, selectedChatData, selectedChatType, addMessage,addTypingUser,removeTypingUser,setTypingUsers,deleteMessage,editMessage, removeChannel } =
+  const { userInfo, selectedChatData, selectedChatType, addMessage,addTypingUser,removeTypingUser,setTypingUsers,deleteMessage,editMessage, removeChannel, updateMessages } =
     useAppStore();
 
   // ⏺️ Refs to store latest selected chat
@@ -49,6 +49,19 @@ export const SocketProvider = ({ children }) => {
       };
       
       socket.current.on("channel-deleted", handleChannelDeleted);
+
+      const handleMessagesRead = (payload) => {
+        const { chatId, messages } = payload;
+        const currentChat = selectedChatDataRef.current; // Use the ref here
+        
+        // Only update the state if the read receipts are for the currently open chat
+        if (currentChat && currentChat._id === chatId) {
+          updateMessages(messages);
+        }
+      };
+      
+      socket.current.on("messages-read", handleMessagesRead);
+
 
       const handleRecieveMessage = (message) => {
 
@@ -118,11 +131,13 @@ export const SocketProvider = ({ children }) => {
 
       return () => {
         socket.current.off("channel-deleted", handleChannelDeleted); // Clean up listener
+        socket.current.off("messages-read", handleMessagesRead);
         socket.current.disconnect();
         console.log("🔌 Socket disconnected");
+        
       };
     }
-  }, [userInfo, addMessage, addTypingUser, removeTypingUser, deleteMessage, editMessage, removeChannel]
+  }, [userInfo, addMessage, addTypingUser, removeTypingUser, deleteMessage, editMessage, removeChannel,updateMessages]
 
 );
 

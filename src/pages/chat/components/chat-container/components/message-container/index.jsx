@@ -11,10 +11,23 @@ import { MdFolderZip } from "react-icons/md";
 import { IoMdArrowDown, IoMdClose } from "react-icons/io";
 import { FaEdit, FaTrash } from "react-icons/fa"; 
 
+import {BsCheck, BsCheckAll} from "react-icons/bs"
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../../../../../../components/ui/popover";
+import {ScrollArea} from '../../../../../../components/ui/scroll-area'
+import { useSocket } from "../../../../../../context/socketContext";
+import { Avatar, AvatarImage } from "@radix-ui/react-avatar";
+import { getColor } from "../../../../../../lib/utils";
+
 
 
 const MessageContainer = () => {
   const scrollRef = useRef();
+  const socket = useSocket();
   const {
     selectedChatType,
     selectedChatData,
@@ -29,6 +42,7 @@ const MessageContainer = () => {
   const [isEditing, setIsEditing] = useState(null);
   const [editText, setEditText] = useState("");
   const [activeMessageMenu, setActiveMessageMenu] = useState(null);
+ 
 
     const handleMenuToggle = (e, messageId) => {
     e.stopPropagation(); 
@@ -71,6 +85,8 @@ const MessageContainer = () => {
       }
     }
   }, [selectedChatData, selectedChatType, setSelectedChatMessages]);
+
+
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -163,10 +179,30 @@ const MessageContainer = () => {
     return imageRegex.test(filePath);
   };
 
+  useEffect(() => {
+    if (socket.current && selectedChatData?._id && selectedChatMessages.length) {
+      const unreadMessages = selectedChatMessages.some(
+        msg => !msg.readBy?.includes(userInfo.id) && (msg.sender?._id || msg.sender) !== userInfo.id
+      );
+
+      if (unreadMessages) {
+        socket.current.emit("mark-as-read", {
+          userId: userInfo.id,
+          chatId: selectedChatData._id,
+          isChannel: selectedChatType === 'channel',
+        });
+      }
+    }
+  }, [socket, selectedChatData, selectedChatMessages, userInfo.id, selectedChatType]);
+
   const renderDMMessages = (message) => {
     const senderId = message?.sender?._id || message?.sender;
     const userId = userInfo?._id || userInfo?.id;
     const isSentByUser = Boolean(senderId && userId && senderId === userId);
+
+     const isRead = message.readBy?.some(user => user._id===selectedChatData?._id);
+
+     
 
     return (
       <div
@@ -206,7 +242,12 @@ const MessageContainer = () => {
                     </>
                 )}
             </div>
-            <div className={`text-xs text-gray-400 ${isSentByUser ? "text-right" : "text-left"}`}>{moment(message.timestamp).format("hh:mm A")}</div>
+            <div className={`text-xs text-gray-400 flex items-center gap-1 ${isSentByUser ? "justify-end" : "justify-start"}`}>
+              <span>{moment(message.timestamp).format("hh:mm A")}</span>
+              {isSentByUser && (
+                isRead ? <BsCheckAll className="text-lg text-blue-500" /> : <BsCheck className="text-lg" />
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -218,6 +259,8 @@ const MessageContainer = () => {
     const userId = userInfo?._id || userInfo?.id;
     const isSentByUser = senderId?.toString() === userId?.toString();
     const senderName = isSentByUser ? "You" : typeof message.sender === "object" ? message.sender.firstName || message.sender.email || "Unknown" : "Unknown";
+
+     const readers = message.readBy?.filter(user => user._id !== senderId) || [];
 
     return (
       <div key={message._id} className={`flex w-full mb-2 ${isSentByUser ? "justify-end" : "justify-start"}`}>
@@ -249,12 +292,45 @@ const MessageContainer = () => {
                 </>
               )}
             </div>
-            <div className={`text-xs text-gray-400 ${isSentByUser ? "text-right" : "text-left"}`}>{moment(message.timestamp).format("hh:mm A")}</div>
+            <div className={`text-xs text-gray-400 flex items-center gap-2 ${isSentByUser ? "text-right" : "text-left"}`}>
+              <span>{moment(message.timestamp).format("hh:mm A")}</span>
+              {readers.length > 0 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="flex items-center gap-1 cursor-pointer hover:underline">
+                      <BsCheckAll className="text-lg text-blue-500" />
+                      <span>{readers.length}</span>
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="bg-[#1c1d21] text-white border-neutral-700 w-60 p-3">
+                    <h4 className="text-md font-semibold mb-3 border-b border-neutral-600 pb-2">Read by</h4>
+                    <ScrollArea className="max-h-48">
+                      <div className="flex flex-col gap-3">
+                        {readers.map((user) => (
+                          <div key={user._id} className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8 rounded-full overflow-hidden">
+                              {user.image ? (
+                                <AvatarImage src={user.image} alt="profile" className="object-cover w-full h-full" />
+                              ) : (
+                                <div className={`uppercase h-8 w-8 text-xs flex items-center justify-center rounded-full ${getColor(user.color)}`}>
+                                  {user.firstName ? user.firstName.charAt(0) : 'U'}
+                                </div>
+                              )}
+                            </Avatar>
+                            <span className="font-medium text-sm">{user.firstName}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
           </div>
         </div>
       </div>
     );
-};
+  };
 
   const renderMessages = () => {
     if (!selectedChatMessages || selectedChatMessages.length === 0) {

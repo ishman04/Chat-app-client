@@ -107,5 +107,16 @@ export const createChatSlice = (set,get) => ({
 
         set({ channels: updatedChannels });
     },
+
+    updateMessages: (updatedMessages) => {
+        const { selectedChatMessages } = get();
+        const updatedMessagesMap = new Map(updatedMessages.map(msg => [msg._id, msg]));
+
+        const newMessages = selectedChatMessages.map(msg => 
+            updatedMessagesMap.has(msg._id) ? updatedMessagesMap.get(msg._id) : msg
+        );
+        
+        set({ selectedChatMessages: newMessages });
+    },
     
 })
