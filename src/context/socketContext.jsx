@@ -66,18 +66,21 @@ export const SocketProvider = ({ children }) => {
       const handleRecieveMessage = (message) => {
         const chatData = selectedChatDataRef.current;
         const chatType = selectedChatTypeRef.current;
-        const sender = message.sender;
+        const currentUserId = userInfo.id
+        const openChatId = chatData?._id
+
+        const isForCurrentChat =
+          (message.sender._id === currentUserId && message.recipient._id === openChatId) ||
+          (message.sender._id === openChatId && message.recipient._id === currentUserId);
 
         if (
-          chatType === 'contact' &&
-          chatData &&
-          chatData._id === sender._id
+          chatType === 'contact' && isForCurrentChat
         ) {
           addMessage(message);
         } else {
-           if (sender._id !== userInfo.id) {
-            bringChatToTop('directMessagesContacts', sender);
-            addUnreadChat(sender._id);
+           if (message.sender._id !== currentUserId) {
+            bringChatToTop('directMessagesContacts', message.sender);
+            addUnreadChat(message.sender._id);
           }
         }
       };
