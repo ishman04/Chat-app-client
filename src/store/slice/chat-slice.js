@@ -75,5 +75,37 @@ export const createChatSlice = (set,get) => ({
                 }
             ]
         })
-    }
+    },
+    removeChannel: (channelId) => {
+        const { channels, selectedChatData, closeChat } = get();
+        
+        // If the deleted/left channel is the one currently being viewed, close it.
+        if (selectedChatData && selectedChatData._id === channelId) {
+            closeChat();
+        }
+
+        set({
+            channels: channels.filter(channel => channel._id !== channelId)
+        });
+    },
+    removeChannelMember: (channelId, memberId) => {
+        const { channels, selectedChatData } = get();
+
+        const updatedChannels = channels.map(channel => {
+            if (channel._id === channelId) {
+                const updatedMembers = channel.members.filter(member => member._id !== memberId);
+                return { ...channel, members: updatedMembers };
+            }
+            return channel;
+        });
+
+        // Also update the selectedChatData if it's the current channel
+        if (selectedChatData && selectedChatData._id === channelId) {
+            const updatedMembers = selectedChatData.members.filter(member => member._id !== memberId);
+            set({ selectedChatData: { ...selectedChatData, members: updatedMembers } });
+        }
+
+        set({ channels: updatedChannels });
+    },
+    
 })

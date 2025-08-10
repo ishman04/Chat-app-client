@@ -13,7 +13,7 @@ export const SocketProvider = ({ children }) => {
   const socket = useRef();
 
   // 🧠 Extract state once using hooks (valid usage)
-  const { userInfo, selectedChatData, selectedChatType, addMessage,addTypingUser,removeTypingUser,setTypingUsers,deleteMessage,editMessage } =
+  const { userInfo, selectedChatData, selectedChatType, addMessage,addTypingUser,removeTypingUser,setTypingUsers,deleteMessage,editMessage, removeChannel } =
     useAppStore();
 
   // ⏺️ Refs to store latest selected chat
@@ -42,6 +42,13 @@ export const SocketProvider = ({ children }) => {
       socket.current.on("connect", () => {
         console.log("✅ Connected to socket server");
       });
+
+      const handleChannelDeleted = ({ channelId }) => {
+        // Use the action from the store to remove the channel
+        removeChannel(channelId);
+      };
+      
+      socket.current.on("channel-deleted", handleChannelDeleted);
 
       const handleRecieveMessage = (message) => {
 
@@ -96,6 +103,13 @@ export const SocketProvider = ({ children }) => {
         editMessage(messageId, newContent);
       };
 
+      const handleRemovedFromChannel = ({ channelId }) => {
+                removeChannel(channelId);
+                toast.info("You have been removed from a channel by the admin.");
+            };
+
+            socket.current.on("removed-from-channel", handleRemovedFromChannel);
+
       socket.current.on("message-deleted", handleMessageDeleted);
       socket.current.on("message-edited", handleMessageEdited);
 
@@ -103,11 +117,15 @@ export const SocketProvider = ({ children }) => {
       socket.current.on("stop-typing", handleStopTypingEvent);
 
       return () => {
+        socket.current.off("channel-deleted", handleChannelDeleted); // Clean up listener
         socket.current.disconnect();
         console.log("🔌 Socket disconnected");
       };
     }
-  }, [userInfo, addMessage, addTypingUser, removeTypingUser, deleteMessage, editMessage]);
+  }, [userInfo, addMessage, addTypingUser, removeTypingUser, deleteMessage, editMessage, removeChannel]
+
+);
+
 
   return (
     <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>

@@ -4,10 +4,11 @@ import MessageBar from "./components/message-bar";
 import MessageContainer from "./components/message-container";
 
 const TypingIndicator = () => {
-  const { typingUsers, selectedChatData } = useAppStore();
+  const { typingUsers, selectedChatData, userInfo } = useAppStore();
 
   if (!typingUsers.length || !selectedChatData) return null;
-  const otherTypingUsers = typingUsers.filter(u => u.id !== selectedChatData._id);
+
+  const otherTypingUsers = typingUsers.filter(u => u.id !== userInfo.id);
 
   if(!otherTypingUsers.length) return null;
   const names = otherTypingUsers.map(u => u.firstName || 'User').join(', ');
