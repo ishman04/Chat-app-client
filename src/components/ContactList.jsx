@@ -10,9 +10,12 @@ const ContactList = ({ contacts,  isChannel = false }) => {
     setSelectedChatType,
     selectedChatMessages,
     setSelectedChatMessages,
+    unreadChats,
+    removeUnreadChat,
   } = useAppStore();
 
   const handleClick = (contact) => {
+    removeUnreadChat(contact._id);
     if (isChannel) {
       setSelectedChatType("channel");
     } else {
@@ -26,14 +29,18 @@ const ContactList = ({ contacts,  isChannel = false }) => {
 
   return (
     <div className="mt-5">
-      {contacts.map((contact) => (
+      {contacts.map((contact) => {
+        const isUnread = unreadChats.has(contact._id)
+        return(
         <div
           key={contact._id}
           onClick={() => handleClick(contact)}
-          className={`pl-6 py-3 transition-all duration-200 rounded-xl cursor-pointer ${
-            selectedChatData && selectedChatData._id === contact._id
-              ? "bg-[#681721] text-white"
-              : "hover:bg-[#222] text-gray-300"
+          className={`pl-6 py-3 transition-all duration-300 rounded-xl cursor-pointer flex justify-between items-center pr-5 ${
+              selectedChatData?._id === contact._id
+                ? "bg-[#681721] text-white"
+                : isUnread
+                ? "bg-red-900/50 hover:bg-red-800/70 text-white font-semibold"
+                : "hover:bg-[#222] text-gray-300"
           }`}
         >
           <div className="flex gap-4 items-center">
@@ -74,8 +81,11 @@ const ContactList = ({ contacts,  isChannel = false }) => {
               {isChannel ? contact.name : contact.firstName || contact.email}
             </div>
           </div>
+          {isUnread && (
+              <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
+            )}
         </div>
-      ))}
+      )})}
     </div>
   );
 };

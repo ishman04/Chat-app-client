@@ -13,7 +13,7 @@ export const SocketProvider = ({ children }) => {
   const socket = useRef();
 
   // 🧠 Extract state once using hooks (valid usage)
-  const { userInfo, selectedChatData, selectedChatType, addMessage,addTypingUser,removeTypingUser,setTypingUsers,deleteMessage,editMessage, removeChannel, updateMessages } =
+  const { userInfo, selectedChatData, selectedChatType, addMessage,addTypingUser,removeTypingUser,setTypingUsers,deleteMessage,editMessage, removeChannel, updateMessages, addUnreadChat, bringChatToTop } =
     useAppStore();
 
   // ⏺️ Refs to store latest selected chat
@@ -64,30 +64,47 @@ export const SocketProvider = ({ children }) => {
 
 
       const handleRecieveMessage = (message) => {
-
         const chatData = selectedChatDataRef.current;
         const chatType = selectedChatTypeRef.current;
+        const sender = message.sender;
 
         if (
-          chatType &&
+          chatType === 'contact' &&
           chatData &&
-          (chatData._id === message.sender._id ||
-            chatData._id === message.recipient._id)
+          chatData._id === sender._id
         ) {
           addMessage(message);
         } else {
-          console.log("⚠️ Message does not match current chat. Ignored.");
+           if (sender._id !== userInfo.id) {
+            bringChatToTop('directMessagesContacts', sender);
+            addUnreadChat(sender._id);
+          }
         }
       };
 
+
       const handleRecieveChannelMessage = (message) => {
-        const { selectedChatData, selectedChatType, addMessage } =
-          useAppStore.getState();
+        const chatData = selectedChatDataRef.current;
+        const chatType = selectedChatTypeRef.current;
+        const channelId = message.channelId;
+        
         if (
-          selectedChatData !== undefined &&
-          selectedChatData._id?.toString() === message.channelId?.toString()
+          chatType === 'channel' &&
+          chatData !== undefined &&
+          chatData._id?.toString() === channelId?.toString()
         ) {
           addMessage(message);
+        } else {
+          // This is the logic for an unread channel message
+           const senderId = typeof message.sender === 'object' ? message.sender._id : message.sender;
+          if (senderId !== userInfo.id) {
+            const { channels } = useAppStore.getState();
+            const channel = channels.find(c => c._id === channelId);
+            if (channel) {
+              bringChatToTop('channels', channel);
+              addUnreadChat(channelId);
+            }
+          }
         }
       };
 
@@ -137,7 +154,7 @@ export const SocketProvider = ({ children }) => {
         
       };
     }
-  }, [userInfo, addMessage, addTypingUser, removeTypingUser, deleteMessage, editMessage, removeChannel,updateMessages]
+  }, [userInfo, addMessage, addTypingUser, removeTypingUser, deleteMessage, editMessage, removeChannel,updateMessages,addUnreadChat, bringChatToTop]
 
 );
 

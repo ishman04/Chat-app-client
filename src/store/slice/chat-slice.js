@@ -7,6 +7,7 @@ export const createChatSlice = (set,get) => ({
     isDownloading: false,
     fileUploadProgress: 0,
     fileDownloadProgress: 0,
+    unreadChats: new Set(),
     deleteMessage: (messageId) => {
         const selectedChatMessages = get().selectedChatMessages;
         set({
@@ -38,6 +39,38 @@ export const createChatSlice = (set,get) => ({
 
     setIsUploading: (isUploading) => set({isUploading}),
     setIsDownloading: (isDownloading) => set({isDownloading}),
+    addUnreadChat: (chatId) => {
+        set(state => {
+            // Create a new Set to ensure React detects the state change
+            const newUnreadChats = new Set(state.unreadChats);
+            newUnreadChats.add(chatId);
+            return { unreadChats: newUnreadChats };
+        });
+    },
+
+    removeUnreadChat: (chatId) => {
+        set(state => {
+            const newUnreadChats = new Set(state.unreadChats);
+            newUnreadChats.delete(chatId);
+            return { unreadChats: newUnreadChats };
+        });
+    },
+    bringChatToTop: (listKey, chat) => {
+        set(state => {
+            const list = [...state[listKey]]; // 'directMessagesContacts' or 'channels'
+            
+            // Find the index of the chat to move
+            const existingChatIndex = list.findIndex(c => c._id === chat._id);
+
+            // If it exists, remove it from its current position
+            if (existingChatIndex !== -1) {
+                list.splice(existingChatIndex, 1);
+            }
+            
+            // Add the (potentially new) chat to the top of the list
+            return { [listKey]: [chat, ...list] };
+        });
+    },
     setFileUploadProgress: (fileUploadProgress) => set({fileUploadProgress}),
     setFileDownloadProgress: (fileDownloadProgress) => set({fileDownloadProgress}),
     setSelectedChatType: (selectedChatType) => set({selectedChatType}),
