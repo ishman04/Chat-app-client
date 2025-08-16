@@ -25,4 +25,5 @@ export const GET_CHANNEL_MESSAGES = `${CHANNEL_ROUTES}/get-channel-messages`
 export const LEAVE_CHANNEL_ROUTE = (channelId) => `${CHANNEL_ROUTES}/${channelId}/leave`;
 export const DELETE_CHANNEL_ROUTE = (channelId) => `${CHANNEL_ROUTES}/${channelId}/delete`;
 
+export const CHATBOT_QUERY_ROUTE = 'api/chatbot/query';
 

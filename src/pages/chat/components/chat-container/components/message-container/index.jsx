@@ -49,38 +49,36 @@ const MessageContainer = () => {
     setActiveMessageMenu(prevMenuId => (prevMenuId === messageId ? null : messageId));
   };
 
-  useEffect(() => {
-    const getMessages = async () => {
+useEffect(() => {
+    // 1. Define the async functions to fetch data
+    const getDMMessages = async () => {
       try {
-        const response = await apiClient.post(
-          GET_ALL_MESSAGES_ROUTES,
-          { id: selectedChatData._id },
-          { withCredentials: true }
-        );
-        if (response.data.data) {
-          setSelectedChatMessages(response.data.data);
-        }
+        const response = await apiClient.post(GET_ALL_MESSAGES_ROUTES, { id: selectedChatData._id }, { withCredentials: true });
+        if (response.data.data) setSelectedChatMessages(response.data.data);
       } catch (error) {
-        console.log(error);
+        console.error("Failed to fetch DM messages:", error);
       }
     };
     const getChannelMessages = async () => {
       try {
-        const response = await apiClient.get(
-          `${GET_CHANNEL_MESSAGES}/${selectedChatData._id}`,
-          { withCredentials: true }
-        );
-        if (response.data.data) {
-          setSelectedChatMessages(response.data.data);
-        }
+        const response = await apiClient.get(`${GET_CHANNEL_MESSAGES}/${selectedChatData._id}`, { withCredentials: true });
+        if (response.data.data) setSelectedChatMessages(response.data.data);
       } catch (error) {
-        console.log(error);
+        console.error("Failed to fetch channel messages:", error);
       }
     };
-    if (selectedChatData._id) {
-      if (selectedChatType === 'contact') {
-        getMessages();
+
+    // 2. Main logic to decide what to do when a chat is selected
+    if (selectedChatData?._id) {
+      // THE FIX: Check if the selected chat is the chatbot.
+      if (selectedChatData._id === 'chatbot-gemini-id') {
+        // If it is the chatbot, clear any previous messages and do NOT fetch from the API.
+        setSelectedChatMessages([]);
+      } else if (selectedChatType === 'contact') {
+        // If it's a normal user, fetch their DM history.
+        getDMMessages();
       } else if (selectedChatType === 'channel') {
+        // If it's a channel, fetch its message history.
         getChannelMessages();
       }
     }
@@ -181,6 +179,9 @@ const MessageContainer = () => {
 
   useEffect(() => {
     if (socket.current && selectedChatData?._id && selectedChatMessages.length) {
+      if (selectedChatData._id === 'chatbot-gemini-id') {
+        return;
+      }
       const unreadMessages = selectedChatMessages.some(
         msg => !msg.readBy?.includes(userInfo.id) && (msg.sender?._id || msg.sender) !== userInfo.id
       );

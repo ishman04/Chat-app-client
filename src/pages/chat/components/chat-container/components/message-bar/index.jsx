@@ -6,15 +6,17 @@ import EmojiPicker from 'emoji-picker-react';
 import { useAppStore } from "../../../../../../store";
 import { useSocket } from "../../../../../../context/socketContext";
 import { apiClient } from "../../../../../../lib/api-client";
-import { UPLOAD_FILE_ROUTE } from "../../../../../../utils/constants";
+import { CHATBOT_QUERY_ROUTE, UPLOAD_FILE_ROUTE } from "../../../../../../utils/constants";
 import { StatusCodes } from "http-status-codes";
+import { toast } from "sonner";
+
 
 const MessageBar = () => {
   const [message, setMessage] = useState("");
   const emojiRef = useRef();
   const fileInputRef = useRef();
   const socket = useSocket();
-  const { userInfo, selectedChatType, selectedChatData, setIsUploading, setFileUploadProgress } = useAppStore();
+  const { userInfo, selectedChatType, selectedChatData, setIsUploading, setFileUploadProgress, addMessage } = useAppStore();
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const typingTimeoutRef = useRef(null);
 
@@ -49,38 +51,54 @@ const MessageBar = () => {
 
   const handleSendMessage = async () => {
     if (message.trim() === "") return;
-    if (selectedChatType === 'contact') {
-      socket.current.emit("sendMessage", {
+    if (selectedChatData?._id === 'chatbot-gemini-id') {
+      const userQueryMessage = {
+        _id: `user-msg-${Date.now()}`,
+        sender: { _id: userInfo.id },
+        recipient: { _id: 'chatbot-gemini-id' },
+        content: message,
+        messageType: 'text',
+        timestamp: new Date(),
+      };
+      addMessage(userQueryMessage);
+
+      const queryText = message;
+      setMessage(""); // Clear input immediately
+
+      try {
+        await apiClient.post(CHATBOT_QUERY_ROUTE, { message: queryText }, { withCredentials: true });
+        // The bot's response comes via a separate socket event
+      } catch (error) {
+        console.error("Chatbot API error:", error);
+        toast.error("Could not reach ChatterBot. Please try again.");
+      }
+    
+    } else {
+      const messageData = {
         sender: userInfo.id,
         content: message,
         recipient: selectedChatData._id,
         messageType: 'text',
-        fileUrl: undefined,
-        originalFilename: undefined,
-      });
-    } else if (selectedChatType === 'channel') {
-      socket.current.emit("sendChannelMessage", {
-        sender: userInfo.id,
-        content: message,
-        messageType: 'text',
-        fileUrl: undefined,
-        originalFilename: undefined,
-        channelId: selectedChatData._id
-      });
-    }
+      };
 
-    if (socket.current) {
+      if (selectedChatType === 'contact') {
+        socket.current.emit("sendMessage", messageData);
+      } else if (selectedChatType === 'channel') {
+        messageData.channelId = selectedChatData._id;
+        socket.current.emit("sendChannelMessage", messageData);
+      }
+
+      setMessage("");
+      if (socket.current) {
         clearTimeout(typingTimeoutRef.current);
         socket.current.emit("stop-typing", {
             recipient: selectedChatData._id,
             channelId: selectedChatData._id,
             isChannel: selectedChatType === 'channel'
         });
+      }
     }
-
-    setMessage("");
-
-
+    // --- END OF NEW LOGIC ---
   };
 
   const handleTyping = (e) => {
